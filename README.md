@@ -40,4 +40,9 @@ So that in the destination folder, your files will be renamed to:
  - `index.js`
  - `index.php`
 
-TODO
+To Do
+-----
+
+ - [ ] Silent mode.
+ - [ ] Option to disable the automatic minification.
+ - [ ] Option to only produce the minified version or the tidied version.
