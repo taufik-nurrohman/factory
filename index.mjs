@@ -16,20 +16,51 @@ const minifier = new cleancss({
     level: 2
 });
 
-const args = yargs(process.argv.slice(2)).command('--from=src-folder --to=dist-folder').help().argv;
+const args = yargs(process.argv.slice(2))
+    .options({
+        from: {
+            default: 'src',
+            describe: 'Your source folder where you store files to compile.',
+            type: 'string'
+        },
+        help: {
+            alias: 'h',
+            describe: 'Show help on how to use the command.',
+            type: 'boolean'
+        },
+        silent: {
+            default: false,
+            describe: 'Disable logging.',
+            type: 'boolean'
+        },
+        to: {
+            default: 'dist',
+            describe: 'Your compiled files will be stored here.',
+            type: 'string'
+        },
+        version: {
+            alias: 'v',
+            describe: 'Show version information.',
+            type: 'boolean'
+        }
+    })
+    .command('--from=src-folder --to=dist-folder')
+    .help()
+    .argv;
 
 const DIR = process.cwd();
-const FROM = args.from ?? 'src';
-const TO = args.to ?? 'dist';
+const DIR_FROM = args.from;
+const DIR_TO = args.to;
+const IS_SILENT = args.silent;
 
-if (!folder.get(FROM)) {
-    console.error('Folder `' + FROM + '` does not exist.');
+if (!folder.get(DIR_FROM)) {
+    console.error('Folder `' + DIR_FROM + '` does not exist.');
     process.exit();
 }
 
-if (!folder.get(TO)) {
-    folder.set(TO, true);
-    console.info('Create folder `' + TO + '`');
+if (!folder.get(DIR_TO)) {
+    folder.set(DIR_TO, true);
+    console.info('Create folder `' + DIR_TO + '`');
 }
 
 const MJS_FORMAT = args['mjs.format'] ?? 'iife';
@@ -65,7 +96,7 @@ const c = {
     ]
 };
 
-let license = (file.getContent(FROM + '/LICENSE') || "").trim();
+let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
 let state = JSON.parse(file.getContent('package.json'));
 
 state.mjs = {
@@ -85,9 +116,9 @@ if (license) {
 
 let content, paths, to, x;
 
-paths = folder.getContent(TO, null, true);
+paths = folder.getContent(DIR_TO, null, true);
 
-console.info('Clean-up folder `' + TO + '`');
+console.info('Clean-up folder `' + DIR_TO + '`');
 
 for (let path in paths) {
     if (path.startsWith(DIR + '/node_modules/')) {
@@ -96,7 +127,7 @@ for (let path in paths) {
     console.log(path);
 }
 
-paths = folder.getContent(FROM, 'css,html,js,mjs,pug,scss', true);
+paths = folder.getContent(DIR_FROM, 'css,html,js,mjs,pug,scss', true);
 
 for (let path in paths) {
     to = path;
@@ -104,7 +135,7 @@ for (let path in paths) {
     if (/^[_.]/.test(path)) {
         continue; // Skip hidden file/folder
     }
-    to = to.replace(FROM + '/', TO + '/');
+    to = to.replace(DIR_FROM + '/', DIR_TO + '/');
     !folder.get(file.parent(to)) && folder.set(file.parent(to) ?? '.', true);
     if (folder.isFolder(path)) {
         if (!folder.get(path)) {
@@ -149,7 +180,7 @@ for (let path in paths) {
             })();
         } else if ('pug' === x) {
             content = compile(file.getContent(path), {
-                basedir: FROM,
+                basedir: DIR_FROM,
                 doctype: 'html',
                 filename: path // What is this for by the way?
             });
