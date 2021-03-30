@@ -49,14 +49,16 @@ const DIR_FROM = args.from;
 const DIR_TO = args.to;
 const SILENT = args.silent;
 
+const relative = path => path.replace(DIR, '.');
+
 if (!folder.get(DIR_FROM)) {
-    !SILENT && console.error('Folder `' + DIR_FROM + '` does not exist.');
+    !SILENT && console.error('Folder `' + relative(DIR_FROM) + '` does not exist.');
     process.exit();
 }
 
 if (!folder.get(DIR_TO)) {
     folder.set(DIR_TO, true);
-    !SILENT && console.info('Create folder `' + DIR_TO + '`');
+    !SILENT && console.info('Create folder `' + relative(DIR_TO) + '`');
 }
 
 const MJS_FORMAT = args['mjs.format'] ?? 'iife';
@@ -74,8 +76,12 @@ const c = {
         babel({
             babelHelpers: 'bundled',
             plugins: [
-                '@babel/plugin-proposal-class-properties',
-                '@babel/plugin-proposal-private-methods'
+                ['@babel/plugin-proposal-class-properties', {
+                    loose: true
+                }],
+                ['@babel/plugin-proposal-private-methods', {
+                    loose: true
+                }]
             ],
             presets: [
                 ['@babel/preset-env', {
@@ -109,7 +115,7 @@ let content, paths, to, v, x;
 paths = folder.getContent(DIR_TO, null, true);
 
 if (CLEAN) {
-    !SILENT && console.info('Clean-up folder `' + DIR_TO + '`');
+    !SILENT && console.info('Clean-up folder `' + relative(DIR_TO) + '`');
     for (let path in paths) {
         v = path + '/';
         if (
@@ -131,7 +137,11 @@ if (CLEAN) {
         ) {
             continue;
         }
-        1 === paths[path] ? file.move(path) : folder.move(path);
+        if (1 === paths[path]) {
+            file.get(path) && file.move(path);
+        } else {
+            folder.get(path) && folder.move(path);
+        }
     }
 }
 
@@ -150,7 +160,7 @@ for (let path in paths) {
     if (folder.isFolder(path)) {
         if (!folder.get(path)) {
             folder.set(path, true);
-            !SILENT && console.info('Create folder `' + path + '`');
+            !SILENT && console.info('Create folder `' + relative(path) + '`');
         }
         continue;
     }
@@ -167,7 +177,7 @@ for (let path in paths) {
                     indent_char: ' ',
                     indent_size: 4
                 }));
-                !SILENT && console.info('Create file `' + v + '`');
+                !SILENT && console.info('Create file `' + relative(v) + '`');
                 const generator = await rollup(c);
                 await generator.write(c.output);
                 await generator.close();
@@ -176,14 +186,14 @@ for (let path in paths) {
                     indent_char: ' ',
                     indent_size: 4
                 }));
-                !SILENT && console.info('Create file `' + to + '`');
+                !SILENT && console.info('Create file `' + relative(to) + '`');
                 minify(content, {
                     compress: {
                         unsafe: true
                     }
                 }).then(result => {
                     file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
-                    !SILENT && console.info('Create file `' + v + '`');
+                    !SILENT && console.info('Create file `' + relative(v) + '`');
                 });
             })();
         } else if ('pug' === x) {
@@ -197,7 +207,7 @@ for (let path in paths) {
                 indent_inner_html: true,
                 indent_size: 2
             }));
-            !SILENT && console.info('Create file `' + to + '`');
+            !SILENT && console.info('Create file `' + relative(to) + '`');
         } else if ('scss' === x) {
             sass.render({
                 file: path,
@@ -210,20 +220,20 @@ for (let path in paths) {
                     indent_char: ' ',
                     indent_size: 2
                 }));
-                !SILENT && console.info('Create file `' + to + '`');
+                !SILENT && console.info('Create file `' + relative(to) + '`');
                 minifier.minify(result.css, (error, result) => {
                     if (error) {
                         throw error;
                     }
                     file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
-                    !SILENT && console.info('Create file `' + v + '`');
+                    !SILENT && console.info('Create file `' + relative(v) + '`');
                 });
             });
             file.setContent(v = to.replace(/\.css$/, '.scss'), beautify.css(content, {
                 indent_char: ' ',
                 indent_size: 2
             }));
-            !SILENT && console.info('Create file `' + v + '`');
+            !SILENT && console.info('Create file `' + relative(v) + '`');
         }
     } else {
         if ('css' === x) {
@@ -231,13 +241,13 @@ for (let path in paths) {
                 indent_char: ' ',
                 indent_size: 2
             }));
-            !SILENT && console.info('Create file `' + to + '`');
+            !SILENT && console.info('Create file `' + relative(to) + '`');
             minifier.minify(result.css, (error, result) => {
                 if (error) {
                     throw error;
                 }
-                file.setContent(to.replace(/\.css$/, '.min.css'), result.styles);
-                !SILENT && console.info('Create file `' + to.replace(/\.css$/, '.min.css') + '`');
+                file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
+                !SILENT && console.info('Create file `' + relative(v) + '`');
             });
         } else if ('html' === x) {
             file.setContent(to, beautify.html(file.parseContent(content, state), {
@@ -245,7 +255,7 @@ for (let path in paths) {
                 indent_inner_html: true,
                 indent_size: 2
             }));
-            !SILENT && console.info('Create file `' + to + '`');
+            !SILENT && console.info('Create file `' + relative(to) + '`');
         } else if ('js' === x) {
             file.setContent(to, beautify.js(content, {
                 indent_char: ' ',
@@ -257,11 +267,11 @@ for (let path in paths) {
                 }
             }).then(result => {
                 file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
-                !SILENT && console.info('Create file `' + v + '`');
+                !SILENT && console.info('Create file `' + relative(v) + '`');
             });
         } else {
             file.copy(path, to);
-            !SILENT && console.info('Copy file `' + path + '` to `' + to + '`');
+            !SILENT && console.info('Copy file `' + relative(path) + '` to `' + relative(to) + '`');
         }
     }
 }
