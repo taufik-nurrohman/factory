@@ -44,7 +44,7 @@ Options
 
 Key | Description
 --- | -----------
-`--clean` | Clean-up the old compiled files before re-compile (default to `false`).
+`--clean` | Clean-up the old compiled files before re-compile (default to `true`).
 `--from` | Folder path to store the files to be compiled (default to `"src"`).
 `--mjs.format` | JavaScript [module format](https://rollupjs.org/guide/en/#quick-start) (default to `"iife"`).
 `--mjs.name` | JavaScript [module name](https://rollupjs.org/guide/en/#quick-start) (default to `"$"`).

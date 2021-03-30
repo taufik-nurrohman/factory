@@ -19,7 +19,7 @@ const minifier = new cleancss({
 const args = yargs(process.argv.slice(2))
     .options({
         clean: {
-            default: false,
+            default: true,
             describe: 'Clean-up dist folder before re-compile',
             type: 'boolean'
         },
@@ -112,10 +112,23 @@ if (CLEAN) {
     !SILENT && console.info('Clean-up folder `' + DIR_TO + '`');
     for (let path in paths) {
         v = path + '/';
-        if (v.startsWith(DIR + '/node_modules/')) {
+        if (
+            v.startsWith(DIR + '/.git/') ||
+            v.startsWith(DIR + '/node_modules/') ||
+            v.startsWith(DIR_FROM + '/')
+        ) {
             continue;
         }
-        if (v.startsWith(DIR_FROM + '/')) {
+        if (
+            path === DIR + '/.gitattributes' ||
+            path === DIR + '/.gitignore' ||
+            path === DIR + '/LICENSE' ||
+            path === DIR + '/README' ||
+            path === DIR + '/composer.json' ||
+            path === DIR + '/composer.lock' ||
+            path === DIR + '/package-lock.json' ||
+            path === DIR + '/package.json'
+        ) {
             continue;
         }
         1 === paths[path] ? file.move(path) : folder.move(path);
@@ -127,11 +140,13 @@ paths = folder.getContent(DIR_FROM, 'css,html,js,mjs,pug,scss', true);
 for (let path in paths) {
     to = path;
     x = file.x(path);
-    if (/^[_.]/.test(path)) {
+    if (/^[_.]/.test(file.name(path))) {
         continue; // Skip hidden file/folder
     }
     to = to.replace(DIR_FROM + '/', DIR_TO + '/');
-    !folder.get(v = file.parent(to)) && folder.set(v ?? '.', true);
+    if (!folder.get(v = file.parent(to))) {
+        folder.set(v ?? '.', true);
+    }
     if (folder.isFolder(path)) {
         if (!folder.get(path)) {
             folder.set(path, true);
