@@ -18,49 +18,45 @@ const minifier = new cleancss({
 
 const args = yargs(process.argv.slice(2))
     .options({
+        clean: {
+            default: false,
+            describe: 'Clean-up dist folder before re-compile',
+            type: 'boolean'
+        },
         from: {
             default: 'src',
-            describe: 'Your source folder where you store files to compile.',
+            describe: 'Folder to store the source files',
             type: 'string'
-        },
-        help: {
-            alias: 'h',
-            describe: 'Show help on how to use the command.',
-            type: 'boolean'
         },
         silent: {
             default: false,
-            describe: 'Disable logging.',
+            describe: 'Disable logging',
             type: 'boolean'
         },
         to: {
             default: 'dist',
-            describe: 'Your compiled files will be stored here.',
+            describe: 'Folder to store the distributable files',
             type: 'string'
-        },
-        version: {
-            alias: 'v',
-            describe: 'Show version information.',
-            type: 'boolean'
         }
     })
-    .command('--from=src-folder --to=dist-folder')
+    .command('--from=src --to=dist')
     .help()
     .argv;
 
+const CLEAN = args.clean;
 const DIR = process.cwd();
 const DIR_FROM = args.from;
 const DIR_TO = args.to;
-const IS_SILENT = args.silent;
+const SILENT = args.silent;
 
 if (!folder.get(DIR_FROM)) {
-    console.error('Folder `' + DIR_FROM + '` does not exist.');
+    !SILENT && console.error('Folder `' + DIR_FROM + '` does not exist.');
     process.exit();
 }
 
 if (!folder.get(DIR_TO)) {
     folder.set(DIR_TO, true);
-    console.info('Create folder `' + DIR_TO + '`');
+    !SILENT && console.info('Create folder `' + DIR_TO + '`');
 }
 
 const MJS_FORMAT = args['mjs.format'] ?? 'iife';
@@ -97,7 +93,7 @@ const c = {
 };
 
 let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
-let state = JSON.parse(file.getContent('package.json'));
+let state = JSON.parse(file.getContent('package.json')) || {};
 
 state.mjs = {
     format: MJS_FORMAT,
@@ -108,23 +104,22 @@ state.year = (new Date).getFullYear();
 
 delete state.scripts;
 
-if (license) {
-    license = license.replace(/\n/g, '\n * ');
-    license = license.replace(/\n \* \n/g, '\n *\n');
-    license = '/*!\n *\n * ' + license + '\n *\n */';
-}
-
-let content, paths, to, x;
+let content, paths, to, v, x;
 
 paths = folder.getContent(DIR_TO, null, true);
 
-console.info('Clean-up folder `' + DIR_TO + '`');
-
-for (let path in paths) {
-    if (path.startsWith(DIR + '/node_modules/')) {
-        continue;
+if (CLEAN) {
+    !SILENT && console.info('Clean-up folder `' + DIR_TO + '`');
+    for (let path in paths) {
+        v = path + '/';
+        if (v.startsWith(DIR + '/node_modules/')) {
+            continue;
+        }
+        if (v.startsWith(DIR_FROM + '/')) {
+            continue;
+        }
+        1 === paths[path] ? file.move(path) : folder.move(path);
     }
-    console.log(path);
 }
 
 paths = folder.getContent(DIR_FROM, 'css,html,js,mjs,pug,scss', true);
@@ -136,60 +131,58 @@ for (let path in paths) {
         continue; // Skip hidden file/folder
     }
     to = to.replace(DIR_FROM + '/', DIR_TO + '/');
-    !folder.get(file.parent(to)) && folder.set(file.parent(to) ?? '.', true);
+    !folder.get(v = file.parent(to)) && folder.set(v ?? '.', true);
     if (folder.isFolder(path)) {
         if (!folder.get(path)) {
             folder.set(path, true);
-            console.info('Create folder `' + path + '`');
+            !SILENT && console.info('Create folder `' + path + '`');
         }
         continue;
     }
+    content = file.getContent(path);
+    content = file.parseContent(content, state);
     if (/^(mjs|pug|scss)$/.test(x)) {
         to = to.replace(/\.(mjs|pug|scss)$/, "");
         if ('mjs' === x) {
             c.input = path;
             c.output.file = to;
             (async () => {
+                // Generate Node.js module…
+                file.setContent(v = to.replace(/\.js$/, '.mjs'), beautify.js(content, {
+                    indent_char: ' ',
+                    indent_size: 4
+                }));
+                !SILENT && console.info('Create file `' + v + '`');
                 const generator = await rollup(c);
                 await generator.write(c.output);
                 await generator.close();
                 // Generate browser module…
-                content = file.getContent(to);
-                content = file.parseContent(license + '\n\n' + content, state);
                 file.setContent(to, beautify.js(content, {
                     indent_char: ' ',
                     indent_size: 4
                 }));
-                console.info('Create file `' + to + '`');
+                !SILENT && console.info('Create file `' + to + '`');
                 minify(content, {
                     compress: {
                         unsafe: true
                     }
                 }).then(result => {
-                    file.setContent(to.replace(/\.js$/, '.min.js'), result.code);
+                    file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
+                    !SILENT && console.info('Create file `' + v + '`');
                 });
-                console.info('Create file `' + to.replace(/\.js$/, '.min.js') + '`');
-                // Generate Node.js module…
-                content = file.getContent(path);
-                content = file.parseContent(license + '\n\n' + content, state);
-                file.setContent(to.replace(/\.js$/, '.mjs'), beautify.js(content, {
-                    indent_char: ' ',
-                    indent_size: 4
-                }));
-                console.info('Create file `' + to.replace(/\.js$/, '.mjs') + '`');
             })();
         } else if ('pug' === x) {
-            content = compile(file.getContent(path), {
+            let pug = compile(content, {
                 basedir: DIR_FROM,
                 doctype: 'html',
                 filename: path // What is this for by the way?
             });
-            file.setContent(to, beautify.html(file.parseContent(content(state), state), {
+            file.setContent(to, beautify.html(pug(state), {
                 indent_char: ' ',
                 indent_inner_html: true,
                 indent_size: 2
             }));
-            console.info('Create file `' + to + '`');
+            !SILENT && console.info('Create file `' + to + '`');
         } else if ('scss' === x) {
             sass.render({
                 file: path,
@@ -202,30 +195,34 @@ for (let path in paths) {
                     indent_char: ' ',
                     indent_size: 2
                 }));
-                console.info('Create file `' + to + '`');
+                !SILENT && console.info('Create file `' + to + '`');
                 minifier.minify(result.css, (error, result) => {
                     if (error) {
                         throw error;
                     }
-                    file.setContent(to.replace(/\.css$/, '.min.css'), result.styles);
-                    console.info('Create file `' + to.replace(/\.css$/, '.min.css') + '`');
+                    file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
+                    !SILENT && console.info('Create file `' + v + '`');
                 });
             });
+            file.setContent(v = to.replace(/\.css$/, '.scss'), beautify.css(content, {
+                indent_char: ' ',
+                indent_size: 2
+            }));
+            !SILENT && console.info('Create file `' + v + '`');
         }
     } else {
-        content = file.getContent(path);
         if ('css' === x) {
             file.setContent(to, beautify.css(file.parseContent(content, state), {
                 indent_char: ' ',
                 indent_size: 2
             }));
-            console.info('Create file `' + to + '`');
+            !SILENT && console.info('Create file `' + to + '`');
             minifier.minify(result.css, (error, result) => {
                 if (error) {
                     throw error;
                 }
                 file.setContent(to.replace(/\.css$/, '.min.css'), result.styles);
-                console.info('Create file `' + to.replace(/\.css$/, '.min.css') + '`');
+                !SILENT && console.info('Create file `' + to.replace(/\.css$/, '.min.css') + '`');
             });
         } else if ('html' === x) {
             file.setContent(to, beautify.html(file.parseContent(content, state), {
@@ -233,9 +230,9 @@ for (let path in paths) {
                 indent_inner_html: true,
                 indent_size: 2
             }));
-            console.info('Create file `' + to + '`');
+            !SILENT && console.info('Create file `' + to + '`');
         } else if ('js' === x) {
-            file.setContent(to, beautify.js(file.parseContent(content, state), {
+            file.setContent(to, beautify.js(content, {
                 indent_char: ' ',
                 indent_size: 4
             }));
@@ -244,12 +241,12 @@ for (let path in paths) {
                     unsafe: true
                 }
             }).then(result => {
-                file.setContent(to.replace(/\.js$/, '.min.js'), result.code);
-                console.info('Create file `' + to.replace(/\.js$/, '.min.js') + '`');
+                file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
+                !SILENT && console.info('Create file `' + v + '`');
             });
         } else {
             file.copy(path, to);
-            console.info('Copy file `' + to + '`');
+            !SILENT && console.info('Copy file `' + path + '` to `' + to + '`');
         }
     }
 }
