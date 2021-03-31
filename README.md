@@ -15,7 +15,7 @@ $ mkdir my-project/dist
 Paste your `*.scss`, `*.mjs`, and `*.pug` files to `./my-project/src` folder.
 
 ~~~ sh
-$ npm install @taufik-nurrohman/factory --save-dev
+$ npm install @taufik-nurrohman/factory --global --save-dev
 ~~~
 
 Generate the production ready files this way:
