@@ -28,6 +28,16 @@ const args = yargs(process.argv.slice(2))
             describe: 'Folder to store the source files',
             type: 'string'
         },
+        'mjs.format': {
+            default: 'iife',
+            describe: 'JavaScript module format',
+            type: 'string'
+        },
+        'mjs.name': {
+            default: "",
+            describe: 'JavaScript module name',
+            type: 'string'
+        },
         silent: {
             default: false,
             describe: 'Disable logging',
@@ -61,8 +71,8 @@ if (!folder.get(DIR_TO)) {
     !SILENT && console.info('Create folder `' + relative(DIR_TO) + '`');
 }
 
-const MJS_FORMAT = args['mjs.format'] ?? 'iife';
-const MJS_NAME = args['mjs.name'] ?? '$';
+const MJS_FORMAT = args['mjs.format'];
+const MJS_NAME = "" === args['mjs.name'] ? false : args['mjs.name'];
 
 const c = {
     // input: path,
