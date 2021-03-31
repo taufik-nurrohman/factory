@@ -22,7 +22,7 @@
     "terser": "^5.6.1",
     "yargs": "^16.2.0"
   },
-  "description": "Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, SCSS and PUG files.",
+  "description": "Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, PUG and SCSS files.",
   "files": [
     "index.mjs"
   ],
