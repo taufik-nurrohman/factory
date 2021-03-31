@@ -22,7 +22,7 @@
     "terser": "^5.6.1",
     "yargs": "^16.2.0"
   },
-  "description": "Simple Node.js build tool.",
+  "description": "Simple Node.js build tool to generate CSS, HTML and JavaScript files from ES6, SCSS and PUG.",
   "files": [
     "index.mjs"
   ],
@@ -41,5 +41,5 @@
     "url": "git+https://github.com/taufik-nurrohman/factory.git"
   },
   "type": "module",
-  "version": "0.0.2"
+  "version": "0.0.3"
 }
