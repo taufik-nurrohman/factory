@@ -1,7 +1,7 @@
 Factory
 =======
 
-My personal Node.js build tool.
+Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, SCSS and PUG files.
 
 Usage
 -----
