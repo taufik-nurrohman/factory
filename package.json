@@ -4,7 +4,7 @@
     "pack": "./index.mjs"
   },
   "bugs": "https://github.com/taufik-nurrohman/factory/issues",
-  "devDependencies": {
+  "dependencies": {
     "@babel/core": "^7.13.14",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
     "@babel/plugin-proposal-private-methods": "^7.13.0",
@@ -22,7 +22,7 @@
     "terser": "^5.6.1",
     "yargs": "^16.2.0"
   },
-  "description": "Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, PUG and SCSS files.",
+  "description": "Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, Pug and SCSS files.",
   "files": [
     "index.mjs"
   ],
@@ -41,5 +41,5 @@
     "url": "git+https://github.com/taufik-nurrohman/factory.git"
   },
   "type": "module",
-  "version": "0.0.3"
+  "version": "0.0.4"
 }

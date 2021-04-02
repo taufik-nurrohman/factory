@@ -165,7 +165,7 @@ for (let path in paths) {
     }
     to = to.replace(DIR_FROM + '/', DIR_TO + '/');
     if (!folder.get(v = file.parent(to))) {
-        folder.set(v ?? '.', true);
+        folder.set(v || '.', true);
     }
     if (folder.isFolder(path)) {
         if (!folder.get(path)) {

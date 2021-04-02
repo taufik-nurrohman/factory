@@ -1,7 +1,7 @@
 Factory
 =======
 
-Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, PUG and SCSS files.
+Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, Pug and SCSS files.
 
 Usage
 -----
