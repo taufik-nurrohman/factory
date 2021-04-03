@@ -231,7 +231,7 @@ for (let path in paths) {
                     indent_size: 2
                 }));
                 !SILENT && console.info('Create file `' + relative(to) + '`');
-                minifier.minify(result.css, (error, result) => {
+                minifier.minify(result.css.toString(), (error, result) => {
                     if (error) {
                         throw error;
                     }
@@ -247,7 +247,7 @@ for (let path in paths) {
         }
     } else {
         if ('css' === x) {
-            file.setContent(to, beautify.css(file.parseContent(content, state), {
+            file.setContent(to, beautify.css(content, {
                 indent_char: ' ',
                 indent_size: 2
             }));
@@ -260,7 +260,7 @@ for (let path in paths) {
                 !SILENT && console.info('Create file `' + relative(v) + '`');
             });
         } else if ('html' === x) {
-            file.setContent(to, beautify.html(file.parseContent(content, state), {
+            file.setContent(to, beautify.html(content, {
                 indent_char: ' ',
                 indent_inner_html: true,
                 indent_size: 2
