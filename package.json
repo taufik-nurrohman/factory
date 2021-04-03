@@ -29,9 +29,12 @@
   "homepage": "https://taufik-nurrohman.js.org",
   "keywords": [
     "cli",
+    "css",
+    "html",
+    "js",
     "mjs",
     "pug",
-    "sass"
+    "scss"
   ],
   "license": "MIT",
   "main": "index.mjs",
