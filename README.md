@@ -47,6 +47,7 @@ Key | Description
 `--clean` | Clean-up the old compiled files before re-compile (default to `true`).
 `--from` | Folder path to store the files to be compiled (default to `"src"`).
 `--mjs.format` | JavaScript [module format](https://rollupjs.org/guide/en/#quick-start) (default to `"iife"`).
+`--mjs.globals` | JavaScript global variables. Example: `--mjs.globals=jquery:jQuery,react:React,vue:Vue`.
 `--mjs.name` | JavaScript [module name](https://rollupjs.org/guide/en/#quick-start) (default to `""`).
 `--silent` | Disable logging (default to `false`).
 `--to` | Folder path to store the compiled files (default to `"dist"`).

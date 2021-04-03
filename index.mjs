@@ -33,6 +33,11 @@ const args = yargs(process.argv.slice(2))
             describe: 'JavaScript module format',
             type: 'string'
         },
+        'mjs.globals': {
+            default: "",
+            describe: 'JavaScript global variables.',
+            type: 'string'
+        },
         'mjs.name': {
             default: "",
             describe: 'JavaScript module name',
@@ -72,13 +77,20 @@ if (!folder.get(DIR_TO)) {
 }
 
 const MJS_FORMAT = args['mjs.format'];
+const MJS_GLOBALS = {};
 const MJS_NAME = "" === args['mjs.name'] ? false : args['mjs.name'];
+
+args['mjs.globals'].split(/\s*,\s*/).forEach(v => {
+    v = v.split(/\s*:\s*/);
+    MJS_GLOBALS[v[0]] = v[1];
+});
 
 const c = {
     // input: path,
     output: {
         // file: to,
         format: MJS_FORMAT,
+        globals: MJS_GLOBALS,
         name: MJS_NAME,
         sourcemap: false
     },
