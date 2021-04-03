@@ -12,14 +12,14 @@ $ mkdir my-project/src
 $ mkdir my-project/dist
 ~~~
 
-Paste your `*.scss`, `*.mjs`, and `*.pug` files to `./my-project/src` folder.
+Paste your `*.scss`, `*.mjs`, and `*.pug` files to `.\my-project\src` folder.
 
 ~~~ sh
 $ cd my-project
 $ npm install @taufik-nurrohman/factory --save-dev
 ~~~
 
-Create a `scripts` field that runs the `pack` command in `package.json`
+Create a `scripts` field that runs the `pack` command in `.\my-project\package.json`
 
 ~~~ json
 {
