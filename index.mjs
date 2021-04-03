@@ -80,7 +80,7 @@ const MJS_FORMAT = args['mjs.format'];
 const MJS_GLOBALS = {};
 const MJS_NAME = "" === args['mjs.name'] ? false : args['mjs.name'];
 
-args['mjs.globals'].split(/\s*,\s*/).forEach(v => {
+(args['mjs.globals'] || "").split(/\s*,\s*/).forEach(v => {
     v = v.split(/\s*:\s*/);
     MJS_GLOBALS[v[0]] = v[1];
 });
