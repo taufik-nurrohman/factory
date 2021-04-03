@@ -15,14 +15,24 @@ $ mkdir my-project/dist
 Paste your `*.scss`, `*.mjs`, and `*.pug` files to `./my-project/src` folder.
 
 ~~~ sh
-$ npm install @taufik-nurrohman/factory --global
+$ cd my-project
+$ npm install @taufik-nurrohman/factory --save-dev
+~~~
+
+Create a `scripts` field that runs the `pack` command in `package.json`
+
+~~~ json
+{
+  "scripts": {
+    "build": "pack --from=src --to=dist"
+  }
+}
 ~~~
 
 Generate the production ready files this way:
 
 ~~~ sh
-$ cd my-project
-$ pack
+$ npm run build
 ~~~
 
 File extension from the source folder will be removed. Make sure to name your files with two file extension like so:
