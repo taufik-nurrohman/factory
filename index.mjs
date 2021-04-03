@@ -6,6 +6,7 @@ import beautify from 'js-beautify';
 import cleancss from 'clean-css';
 import resolve from '@rollup/plugin-node-resolve';
 import sass from 'node-sass';
+import virtual from '@rollup/plugin-virtual';
 import yargs from 'yargs';
 import {babel, getBabelOutputPlugin} from '@rollup/plugin-babel';
 import {compile} from 'pug';
@@ -29,24 +30,39 @@ const args = yargs(process.argv.slice(2))
             describe: 'Folder to store the source files',
             type: 'string'
         },
-        'mjs.format': {
+        'js-format': {
             default: 'iife',
             describe: 'JavaScript module format',
             type: 'string'
         },
-        'mjs.globals': {
+        'js-globals': {
             default: "",
-            describe: 'JavaScript global variables.',
+            describe: 'JavaScript global variables',
             type: 'string'
         },
-        'mjs.name': {
+        'js-name': {
             default: "",
             describe: 'JavaScript module name',
             type: 'string'
         },
+        mjs: {
+            default: false,
+            describe: 'Include MJS files to the output as well',
+            type: 'boolean'
+        },
+        scss: {
+            default: false,
+            describe: 'Include SCSS files to the output as well',
+            type: 'boolean'
+        },
         silent: {
             default: false,
             describe: 'Disable logging',
+            type: 'boolean'
+        },
+        pug: {
+            default: false,
+            describe: 'Include Pug files to the output as well',
             type: 'boolean'
         },
         to: {
@@ -65,6 +81,10 @@ const DIR_FROM = normalize(DIR + '/' + args.from);
 const DIR_TO = normalize(DIR + '/' + args.to);
 const SILENT = args.silent;
 
+const INCLUDE_MJS = args.mjs;
+const INCLUDE_PUG = args.pug;
+const INCLUDE_SCSS = args.scss;
+
 const relative = path => path.replace(DIR, '.');
 
 if (!folder.get(DIR_FROM)) {
@@ -77,59 +97,35 @@ if (!folder.get(DIR_TO)) {
     !SILENT && console.info('Create folder `' + relative(DIR_TO) + '`');
 }
 
-const MJS_FORMAT = args['mjs.format'];
-const MJS_GLOBALS = {};
-const MJS_NAME = "" === args['mjs.name'] ? false : args['mjs.name'];
+const JS_FORMAT = args['js-format'];
+const JS_GLOBALS = {};
+const JS_NAME = "" === args['js-name'] ? false : args['js-name'];
 
-(args['mjs.globals'] || "").split(/\s*,\s*/).forEach(v => {
+(args['js-globals'] || "").split(/\s*,\s*/).forEach(v => {
     v = v.split(/\s*:\s*/);
-    MJS_GLOBALS[v[0]] = v[1];
+    JS_GLOBALS[v[0]] = v[1];
 });
-
-const c = {
-    // input: path,
-    output: {
-        // file: to,
-        format: MJS_FORMAT,
-        globals: MJS_GLOBALS,
-        name: MJS_NAME,
-        sourcemap: false
-    },
-    plugins: [
-        babel({
-            babelHelpers: 'bundled',
-            plugins: [
-                ['@babel/plugin-proposal-class-properties', {
-                    loose: true
-                }],
-                ['@babel/plugin-proposal-private-methods', {
-                    loose: true
-                }]
-            ],
-            presets: [
-                ['@babel/preset-env', {
-                    loose: true,
-                    modules: false,
-                    targets: '>0.25%'
-                }]
-            ]
-        }),
-        getBabelOutputPlugin({
-            allowAllFormats: true
-        }),
-        resolve()
-    ]
-};
 
 let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
 let state = JSON.parse(file.getContent('package.json')) || {};
 
-state.mjs = {
-    format: MJS_FORMAT,
-    name: MJS_NAME
+state.year = (new Date).getFullYear();
+
+license = file.parseContent(license, state);
+
+state.css = {
+    license: '/*!\n *\n * ' + license.replace(/\n/g, '\n * ').replace(/\n [*] \n/g, '\n *\n') + '\n *\n */'
 };
 
-state.year = (new Date).getFullYear();
+state.html = {
+    license: '<!--\n\n' + license + '\n\n-->'
+};
+
+state.js = {
+    format: JS_FORMAT,
+    license: '/*!\n *\n * ' + license.replace(/\n/g, '\n * ').replace(/\n [*] \n/g, '\n *\n') + '\n *\n */',
+    name: JS_NAME
+};
 
 delete state.scripts;
 
@@ -168,130 +164,159 @@ if (CLEAN) {
     }
 }
 
-paths = folder.getContent(DIR_FROM, 'css,html,js,mjs,pug,scss', true);
-
-for (let path in paths) {
-    to = path;
-    x = file.x(path);
-    if (/^[_.]/.test(file.name(path))) {
-        continue; // Skip hidden file/folder
-    }
-    to = to.replace(DIR_FROM + '/', DIR_TO + '/');
-    if (!folder.get(v = file.parent(to))) {
-        folder.set(v || '.', true);
-    }
-    if (folder.isFolder(path)) {
-        if (!folder.get(path)) {
-            folder.set(path, true);
-            !SILENT && console.info('Create folder `' + relative(path) + '`');
+function factory(x, then, state) {
+    let paths = folder.getContent(DIR_FROM, x, true);
+    for (let path in paths) {
+        to = path;
+        if (/^[_.]/.test(file.name(path))) {
+            continue; // Skip hidden file/folder
         }
-        continue;
-    }
-    content = file.getContent(path);
-    content = file.parseContent(content, state);
-    if (/^(mjs|pug|scss)$/.test(x)) {
-        to = to.replace(/\.(mjs|pug|scss)$/, "");
-        if ('mjs' === x) {
-            c.input = path;
-            c.output.file = to;
-            (async () => {
-                // Generate Node.js module…
-                file.setContent(v = to.replace(/\.js$/, '.mjs'), beautify.js(content, {
-                    indent_char: ' ',
-                    indent_size: 4
-                }));
-                !SILENT && console.info('Create file `' + relative(v) + '`');
-                const generator = await rollup(c);
-                await generator.write(c.output);
-                await generator.close();
-                // Generate browser module…
-                file.setContent(to, beautify.js(content, {
-                    indent_char: ' ',
-                    indent_size: 4
-                }));
-                !SILENT && console.info('Create file `' + relative(to) + '`');
-                minify(content, {
-                    compress: {
-                        unsafe: true
-                    }
-                }).then(result => {
-                    file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
-                    !SILENT && console.info('Create file `' + relative(v) + '`');
-                });
-            })();
-        } else if ('pug' === x) {
-            let pug = compile(content, {
-                basedir: DIR_FROM,
-                doctype: 'html',
-                filename: path // What is this for by the way?
-            });
-            file.setContent(to, beautify.html(pug(state), {
-                indent_char: ' ',
-                indent_inner_html: true,
-                indent_size: 2
-            }));
-            !SILENT && console.info('Create file `' + relative(to) + '`');
-        } else if ('scss' === x) {
-            sass.render({
-                data: content,
-                outputStyle: 'expanded'
-            }, (error, result) => {
-                if (error) {
-                    throw error;
-                }
-                file.setContent(to, beautify.css(v = result.css.toString(), {
-                    indent_char: ' ',
-                    indent_size: 2
-                }));
-                !SILENT && console.info('Create file `' + relative(to) + '`');
-                minifier.minify(v, (error, result) => {
-                    if (error) {
-                        throw error;
-                    }
-                    file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
-                    !SILENT && console.info('Create file `' + relative(v) + '`');
-                });
-            });
-            file.setContent(v = to.replace(/\.css$/, '.scss'), content);
-            !SILENT && console.info('Create file `' + relative(v) + '`');
+        to = to.replace(DIR_FROM + '/', DIR_TO + '/');
+        if (!folder.get(v = file.parent(to))) {
+            folder.set(v || '.', true);
         }
-    } else {
-        if ('css' === x) {
-            file.setContent(to, beautify.css(content, {
-                indent_char: ' ',
-                indent_size: 2
-            }));
-            !SILENT && console.info('Create file `' + relative(to) + '`');
-            minifier.minify(content, (error, result) => {
-                if (error) {
-                    throw error;
-                }
-                file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
-                !SILENT && console.info('Create file `' + relative(v) + '`');
-            });
-        } else if ('html' === x) {
-            file.setContent(to, beautify.html(content, {
-                indent_char: ' ',
-                indent_inner_html: true,
-                indent_size: 2
-            }));
-            !SILENT && console.info('Create file `' + relative(to) + '`');
-        } else if ('js' === x) {
-            file.setContent(to, beautify.js(content, {
-                indent_char: ' ',
-                indent_size: 4
-            }));
-            minify(content, {
-                compress: {
-                    unsafe: true
-                }
-            }).then(result => {
-                file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
-                !SILENT && console.info('Create file `' + relative(v) + '`');
-            });
-        } else {
-            file.copy(path, to);
-            !SILENT && console.info('Copy file `' + relative(path) + '` to `' + relative(to) + '`');
+        if (folder.isFolder(path)) {
+            if (!folder.get(path)) {
+                folder.set(path, true);
+                !SILENT && console.info('Create folder `' + relative(path) + '`');
+            }
+            continue;
         }
+        content = file.getContent(path);
+        content = file.parseContent(content, state);
+        to = to.replace(new RegExp('\\.' + x + '$'), "");
+        then(path, to, content);
     }
 }
+
+factory('mjs', function(from, to, content) {
+    if (!/\.js$/.test(to)) {
+        to += '.js';
+    }
+    // Generate Node.js module…
+    if (INCLUDE_MJS) {
+        file.setContent(v = to.replace(/\.js$/, '.mjs'), content);
+        !SILENT && console.info('Create file `' + relative(v) + '`');
+    }
+    const c = {
+        input: 'entry',
+        output: {
+            file: to,
+            format: JS_FORMAT,
+            globals: JS_GLOBALS,
+            name: JS_NAME,
+            sourcemap: false
+        },
+        plugins: [
+            babel({
+                babelHelpers: 'bundled',
+                plugins: [
+                    ['@babel/plugin-proposal-class-properties', {
+                        loose: true
+                    }],
+                    ['@babel/plugin-proposal-private-methods', {
+                        loose: true
+                    }]
+                ],
+                presets: [
+                    ['@babel/preset-env', {
+                        loose: true,
+                        modules: false,
+                        targets: '>0.25%'
+                    }]
+                ]
+            }),
+            getBabelOutputPlugin({
+                allowAllFormats: true
+            }),
+            resolve(),
+            virtual({
+                entry: content
+            })
+        ]
+    };
+    (async () => {
+        const generator = await rollup(c);
+        await generator.write(c.output);
+        await generator.close();
+        // Generate browser module…
+        content = file.getContent(to);
+        file.setContent(to, beautify.js(content, {
+            indent_char: ' ',
+            indent_size: 4,
+            preserve_newlines: false
+        }));
+        !SILENT && console.info('Create file `' + relative(to) + '`');
+        minify(content, {
+            compress: {
+                unsafe: true
+            }
+        }).then(result => {
+            file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
+            !SILENT && console.info('Create file `' + relative(v) + '`');
+        });
+    })();
+}, state);
+
+factory('pug', function(from, to, content) {
+    // if (!/\.html$/.test(to)) {
+    //     to += '.html';
+    // }
+    if (INCLUDE_PUG) {
+        file.setContent(v = to.replace(/\.html$/, '.pug'), content);
+        !SILENT && console.info('Create file `' + relative(v) + '`');
+    }
+    let pug = compile(content, {
+        basedir: DIR_FROM,
+        doctype: 'html',
+        filename: from // What is this for by the way?
+    });
+    file.setContent(to, beautify.html(pug(state), {
+        css: {
+            newline_between_rules: false,
+            selector_separator_newline: true,
+            space_around_combinator: true
+        },
+        extra_liners: [],
+        indent_char: ' ',
+        indent_inner_html: true,
+        indent_size: 2,
+        js: {
+            indent_size: 4
+        }
+    }));
+    !SILENT && console.info('Create file `' + relative(to) + '`');
+}, state);
+
+factory('scss', function(from, to, content) {
+    if (!/\.css$/.test(to)) {
+        to += '.css';
+    }
+    if (INCLUDE_SCSS) {
+        file.setContent(v = to.replace(/\.css$/, '.scss'), content);
+        !SILENT && console.info('Create file `' + relative(v) + '`');
+    }
+    sass.render({
+        data: content,
+        outputStyle: 'compact'
+    }, (error, result) => {
+        if (error) {
+            throw error;
+        }
+        file.setContent(to, beautify.css(v = result.css.toString(), {
+            indent_char: ' ',
+            indent_size: 2,
+            newline_between_rules: false,
+            selector_separator_newline: true,
+            space_around_combinator: true
+        }));
+        !SILENT && console.info('Create file `' + relative(to) + '`');
+        minifier.minify(v, (error, result) => {
+            if (error) {
+                throw error;
+            }
+            file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
+            !SILENT && console.info('Create file `' + relative(v) + '`');
+        });
+    });
+}, state);
