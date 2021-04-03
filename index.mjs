@@ -10,6 +10,7 @@ import yargs from 'yargs';
 import {babel, getBabelOutputPlugin} from '@rollup/plugin-babel';
 import {compile} from 'pug';
 import {minify} from 'terser';
+import {normalize} from 'path';
 import {rollup} from 'rollup';
 
 const minifier = new cleancss({
@@ -60,8 +61,8 @@ const args = yargs(process.argv.slice(2))
 
 const CLEAN = args.clean;
 const DIR = process.cwd();
-const DIR_FROM = args.from;
-const DIR_TO = args.to;
+const DIR_FROM = normalize(DIR + '/' + args.from);
+const DIR_TO = normalize(DIR + '/' + args.to);
 const SILENT = args.silent;
 
 const relative = path => path.replace(DIR, '.');
@@ -232,18 +233,18 @@ for (let path in paths) {
             !SILENT && console.info('Create file `' + relative(to) + '`');
         } else if ('scss' === x) {
             sass.render({
-                file: path,
+                data: content,
                 outputStyle: 'expanded'
             }, (error, result) => {
                 if (error) {
                     throw error;
                 }
-                file.setContent(to, beautify.css(result.css.toString(), {
+                file.setContent(to, beautify.css(v = result.css.toString(), {
                     indent_char: ' ',
                     indent_size: 2
                 }));
                 !SILENT && console.info('Create file `' + relative(to) + '`');
-                minifier.minify(result.css.toString(), (error, result) => {
+                minifier.minify(v, (error, result) => {
                     if (error) {
                         throw error;
                     }
@@ -251,10 +252,7 @@ for (let path in paths) {
                     !SILENT && console.info('Create file `' + relative(v) + '`');
                 });
             });
-            file.setContent(v = to.replace(/\.css$/, '.scss'), beautify.css(content, {
-                indent_char: ' ',
-                indent_size: 2
-            }));
+            file.setContent(v = to.replace(/\.css$/, '.scss'), content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
         }
     } else {
@@ -264,7 +262,7 @@ for (let path in paths) {
                 indent_size: 2
             }));
             !SILENT && console.info('Create file `' + relative(to) + '`');
-            minifier.minify(result.css, (error, result) => {
+            minifier.minify(content, (error, result) => {
                 if (error) {
                     throw error;
                 }
