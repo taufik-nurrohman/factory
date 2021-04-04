@@ -20,12 +20,12 @@ const minifier = new cleancss({
 
 const args = yargs(process.argv.slice(2))
     .options({
-        clean: {
+        'clean': {
             default: true,
             describe: 'Clean-up dist folder before re-compile',
             type: 'boolean'
         },
-        from: {
+        'from': {
             default: 'src',
             describe: 'Folder to store the source files',
             type: 'string'
@@ -45,27 +45,27 @@ const args = yargs(process.argv.slice(2))
             describe: 'JavaScript module name',
             type: 'string'
         },
-        mjs: {
+        'mjs': {
             default: false,
             describe: 'Include MJS files to the output as well',
             type: 'boolean'
         },
-        scss: {
+        'scss': {
             default: false,
             describe: 'Include SCSS files to the output as well',
             type: 'boolean'
         },
-        silent: {
+        'silent': {
             default: false,
             describe: 'Disable logging',
             type: 'boolean'
         },
-        pug: {
+        'pug': {
             default: false,
             describe: 'Include Pug files to the output as well',
             type: 'boolean'
         },
-        to: {
+        'to': {
             default: 'dist',
             describe: 'Folder to store the distributable files',
             type: 'string'
@@ -107,24 +107,38 @@ const JS_NAME = "" === args['js-name'] ? false : args['js-name'];
 });
 
 let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
+let readMe = (file.getContent(DIR_FROM + '/README.md') || "").trim();
 let state = JSON.parse(file.getContent('package.json')) || {};
 
 state.year = (new Date).getFullYear();
 
 license = file.parseContent(license, state);
+readMe = file.parseContent(readMe, state);
+
+let licenseCSS = '/*!\n *\n * ' + license.replace(/\n(\S)/g, '\n * $1').replace(/\n\n/g, '\n *\n') + '\n *\n */';
+let licenseHTML = '<!--\n\n' + license + '\n\n-->';
+let licenseJS = license.replace(/(^|\n)(\S)/g, '$1// $2');
 
 state.css = {
-    license: '/*!\n *\n * ' + license.replace(/\n/g, '\n * ').replace(/\n [*] \n/g, '\n *\n') + '\n *\n */'
+    license: licenseCSS
 };
 
 state.html = {
-    license: '<!--\n\n' + license + '\n\n-->'
+    license: licenseHTML
 };
 
 state.js = {
     format: JS_FORMAT,
-    license: '/*!\n *\n * ' + license.replace(/\n/g, '\n * ').replace(/\n [*] \n/g, '\n *\n') + '\n *\n */',
+    license: licenseCSS,
     name: JS_NAME
+};
+
+state.pug = {
+    license: '!= ' + JSON.stringify(licenseHTML)
+};
+
+state.scss = {
+    license: licenseJS
 };
 
 delete state.scripts;
@@ -320,3 +334,13 @@ factory('scss', function(from, to, content) {
         });
     });
 }, state);
+
+if (license) {
+    file.setContent(v = DIR_TO + '/LICENSE', license);
+    !SILENT && console.info('Create file `' + relative(v) + '`');
+}
+
+if (readMe) {
+    file.setContent(v = DIR_TO + '/README.md', readMe);
+    !SILENT && console.info('Create file `' + relative(v) + '`');
+}
