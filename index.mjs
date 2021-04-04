@@ -13,6 +13,7 @@ import {compile} from 'pug';
 import {minify} from 'terser';
 import {normalize} from 'path';
 import {rollup} from 'rollup';
+import {statSync} from 'fs';
 
 const minifier = new cleancss({
     level: 2
@@ -143,18 +144,18 @@ state.scss = {
 
 delete state.scripts;
 
-let content, paths, to, v, x;
-
-paths = folder.getContent(DIR_TO, null, true);
+let content, to, v, x;
 
 if (CLEAN) {
     !SILENT && console.info('Clean-up folder `' + relative(DIR_TO) + '`');
+    let paths = folder.getContent(DIR_TO, null, true);
     for (let path in paths) {
         v = path + '/';
         if (
             v.startsWith(DIR + '/.git/') ||
             v.startsWith(DIR + '/node_modules/') ||
-            v.startsWith(DIR_FROM + '/')
+            v.startsWith(DIR_FROM + '/') ||
+            (DIR_FROM + '/').startsWith(v)
         ) {
             continue;
         }
@@ -162,7 +163,7 @@ if (CLEAN) {
             path === DIR + '/.gitattributes' ||
             path === DIR + '/.gitignore' ||
             path === DIR + '/LICENSE' ||
-            path === DIR + '/README' ||
+            path === DIR + '/README.md' ||
             path === DIR + '/composer.json' ||
             path === DIR + '/composer.lock' ||
             path === DIR + '/package-lock.json' ||
@@ -203,73 +204,95 @@ function factory(x, then, state) {
     }
 }
 
+function isFileStale(from, to) {
+    if (!file.isFile(from)) {
+        return true;
+    }
+    from = statSync(from);
+    if (!from || !from.mtime) {
+        return true;
+    }
+    if (!file.isFile(to)) {
+        return true;
+    }
+    to = statSync(to);
+    if (!to || !to.mtime) {
+        return true;
+    }
+    return from.mtime.getTime() > to.mtime.getTime();
+}
+
 factory('mjs', function(from, to, content) {
     if (!/\.js$/.test(to)) {
         to += '.js';
     }
     // Generate Node.js module…
     if (INCLUDE_MJS) {
-        file.setContent(v = to.replace(/\.js$/, '.mjs'), content);
-        !SILENT && console.info('Create file `' + relative(v) + '`');
-    }
-    const c = {
-        input: 'entry',
-        output: {
-            file: to,
-            format: JS_FORMAT,
-            globals: JS_GLOBALS,
-            name: JS_NAME,
-            sourcemap: false
-        },
-        plugins: [
-            babel({
-                babelHelpers: 'bundled',
-                plugins: [
-                    ['@babel/plugin-proposal-class-properties', {
-                        loose: true
-                    }],
-                    ['@babel/plugin-proposal-private-methods', {
-                        loose: true
-                    }]
-                ],
-                presets: [
-                    ['@babel/preset-env', {
-                        loose: true,
-                        modules: false,
-                        targets: '>0.25%'
-                    }]
-                ]
-            }),
-            getBabelOutputPlugin({
-                allowAllFormats: true
-            }),
-            resolve(),
-            virtual({
-                entry: content
-            })
-        ]
-    };
-    (async () => {
-        const generator = await rollup(c);
-        await generator.write(c.output);
-        await generator.close();
-        // Generate browser module…
-        content = file.getContent(to);
-        file.setContent(to, beautify.js(content, {
-            indent_char: ' ',
-            indent_size: 4,
-            preserve_newlines: false
-        }));
-        !SILENT && console.info('Create file `' + relative(to) + '`');
-        minify(content, {
-            compress: {
-                unsafe: true
-            }
-        }).then(result => {
-            file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
+        if (isFileStale(from, v = to.replace(/\.js$/, '.mjs'))) {
+            file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
-        });
-    })();
+        }
+    }
+    if (isFileStale(from, to)) {
+        const c = {
+            input: 'entry',
+            output: {
+                file: to,
+                format: JS_FORMAT,
+                globals: JS_GLOBALS,
+                name: JS_NAME,
+                sourcemap: false
+            },
+            plugins: [
+                babel({
+                    babelHelpers: 'bundled',
+                    plugins: [
+                        ['@babel/plugin-proposal-class-properties', {
+                            loose: true
+                        }],
+                        ['@babel/plugin-proposal-private-methods', {
+                            loose: true
+                        }]
+                    ],
+                    presets: [
+                        ['@babel/preset-env', {
+                            loose: true,
+                            modules: false,
+                            targets: '>0.25%'
+                        }]
+                    ]
+                }),
+                getBabelOutputPlugin({
+                    allowAllFormats: true
+                }),
+                resolve(),
+                virtual({
+                    entry: content
+                })
+            ]
+        };
+        (async () => {
+            const generator = await rollup(c);
+            await generator.write(c.output);
+            await generator.close();
+            // Generate browser module…
+            content = file.getContent(to);
+            file.setContent(to, beautify.js(content, {
+                indent_char: ' ',
+                indent_size: 4,
+                preserve_newlines: false
+            }));
+            !SILENT && console.info('Create file `' + relative(to) + '`');
+            minify(content, {
+                compress: {
+                    unsafe: true
+                }
+            }).then(result => {
+                file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
+                !SILENT && console.info('Create file `' + relative(v) + '`');
+            });
+        })();
+    }
 }, state);
 
 factory('pug', function(from, to, content) {
@@ -277,29 +300,33 @@ factory('pug', function(from, to, content) {
     //     to += '.html';
     // }
     if (INCLUDE_PUG) {
-        file.setContent(v = to.replace(/\.html$/, '.pug'), content);
-        !SILENT && console.info('Create file `' + relative(v) + '`');
-    }
-    let pug = compile(content, {
-        basedir: DIR_FROM,
-        doctype: 'html',
-        filename: from // What is this for by the way?
-    });
-    file.setContent(to, beautify.html(pug(state), {
-        css: {
-            newline_between_rules: false,
-            selector_separator_newline: true,
-            space_around_combinator: true
-        },
-        extra_liners: [],
-        indent_char: ' ',
-        indent_inner_html: true,
-        indent_size: 2,
-        js: {
-            indent_size: 4
+        if (isFileStale(from, v = to.replace(/\.html$/, '.pug'))) {
+            file.setContent(v, content);
+            !SILENT && console.info('Create file `' + relative(v) + '`');
         }
-    }));
-    !SILENT && console.info('Create file `' + relative(to) + '`');
+    }
+    if (isFileStale(from, to)) {
+        let pug = compile(content, {
+            basedir: DIR_FROM,
+            doctype: 'html',
+            filename: from // What is this for by the way?
+        });
+        file.setContent(to, beautify.html(pug(state), {
+            css: {
+                newline_between_rules: false,
+                selector_separator_newline: true,
+                space_around_combinator: true
+            },
+            extra_liners: [],
+            indent_char: ' ',
+            indent_inner_html: true,
+            indent_size: 2,
+            js: {
+                indent_size: 4
+            }
+        }));
+        !SILENT && console.info('Create file `' + relative(to) + '`');
+    }
 }, state);
 
 factory('scss', function(from, to, content) {
@@ -307,40 +334,44 @@ factory('scss', function(from, to, content) {
         to += '.css';
     }
     if (INCLUDE_SCSS) {
-        file.setContent(v = to.replace(/\.css$/, '.scss'), content);
-        !SILENT && console.info('Create file `' + relative(v) + '`');
-    }
-    sass.render({
-        data: content,
-        outputStyle: 'compact'
-    }, (error, result) => {
-        if (error) {
-            throw error;
+        if (isFileStale(from, v = to.replace(/\.css$/, '.scss'))) {
+            file.setContent(v, content);
+            !SILENT && console.info('Create file `' + relative(v) + '`');
         }
-        file.setContent(to, beautify.css(v = result.css.toString(), {
-            indent_char: ' ',
-            indent_size: 2,
-            newline_between_rules: false,
-            selector_separator_newline: true,
-            space_around_combinator: true
-        }));
-        !SILENT && console.info('Create file `' + relative(to) + '`');
-        minifier.minify(v, (error, result) => {
+    }
+    if (isFileStale(from, to)) {
+        sass.render({
+            data: content,
+            outputStyle: 'compact'
+        }, (error, result) => {
             if (error) {
                 throw error;
             }
-            file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
-            !SILENT && console.info('Create file `' + relative(v) + '`');
+            file.setContent(to, beautify.css(v = result.css.toString(), {
+                indent_char: ' ',
+                indent_size: 2,
+                newline_between_rules: false,
+                selector_separator_newline: true,
+                space_around_combinator: true
+            }));
+            !SILENT && console.info('Create file `' + relative(to) + '`');
+            minifier.minify(v, (error, result) => {
+                if (error) {
+                    throw error;
+                }
+                file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
+                !SILENT && console.info('Create file `' + relative(v) + '`');
+            });
         });
-    });
+    }
 }, state);
 
-if (license) {
-    file.setContent(v = DIR_TO + '/LICENSE', license);
+if (license && isFileStale(DIR_FROM + '/LICENSE', v = DIR_TO + '/LICENSE')) {
+    file.setContent(v, license);
     !SILENT && console.info('Create file `' + relative(v) + '`');
 }
 
-if (readMe) {
-    file.setContent(v = DIR_TO + '/README.md', readMe);
+if (readMe && isFileStale(DIR_FROM + '/README.md', v = DIR_TO + '/README.md')) {
+    file.setContent(v, readMe);
     !SILENT && console.info('Create file `' + relative(v) + '`');
 }
