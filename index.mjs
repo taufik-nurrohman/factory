@@ -385,16 +385,3 @@ if (readMe && isFileStale(DIR_FROM + '/README.md', v = DIR_TO + '/README.md')) {
     file.setContent(v, readMe);
     !SILENT && console.info('Create file `' + relative(v) + '`');
 }
-
-if (state.files) {
-    state.files.forEach(n => {
-        let path = DIR + '/' + n;
-        v = file.name(n);
-        x = file.x(n);
-        if (state[x] && state[x].license) {
-            content = file.getContent(path);
-            !SILENT && console.info('Insert license block to `' + relative(path) + '`');
-            file.setContent(path, state[x].license + (-1 === v.indexOf('.min.') ? '\n\n' : "") + content);
-        }
-    });
-}
