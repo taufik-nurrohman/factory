@@ -144,24 +144,23 @@ state.scss = {
 
 delete state.scripts;
 
-let content, to, v, x;
+let content, paths, to, v, x;
 
 if (CLEAN) {
     !SILENT && console.info('Clean-up folder `' + relative(DIR_TO) + '`');
-    let paths = folder.getContent(DIR_TO, null, true);
+    paths = folder.getContent(DIR_TO, (value, key) => {
+        key += '/';
+        return -1 === key.indexOf('/.git/') && -1 === key.indexOf('/node_modules/');
+    }, true);
     for (let path in paths) {
         v = path + '/';
-        if (
-            v.startsWith(DIR + '/.git/') ||
-            v.startsWith(DIR + '/node_modules/') ||
-            v.startsWith(DIR_FROM + '/') ||
-            (DIR_FROM + '/').startsWith(v)
-        ) {
+        if (v.startsWith(DIR_FROM + '/') || (DIR_FROM + '/').startsWith(v)) {
             continue;
         }
         if (
-            path === DIR + '/.gitattributes' ||
-            path === DIR + '/.gitignore' ||
+            // Skip hidden file/folder such as `.gitattributes` and `.gitignore`
+            path.startsWith(DIR + '/.') ||
+            // Skip special file
             path === DIR + '/LICENSE' ||
             path === DIR + '/README.md' ||
             path === DIR + '/composer.json' ||
@@ -169,6 +168,7 @@ if (CLEAN) {
             path === DIR + '/package-lock.json' ||
             path === DIR + '/package.json'
         ) {
+            !SILENT && console.info('Skip file `' + relative(path) + '`');
             continue;
         }
         if (1 === paths[path]) {
@@ -180,7 +180,13 @@ if (CLEAN) {
 }
 
 function factory(x, then, state) {
-    let paths = folder.getContent(DIR_FROM, x, true);
+    paths = folder.getContent(DIR_FROM, (value, key) => {
+        if (1 === value && -1 === (',' + x + ',').indexOf(',' + file.x(key) + ',')) {
+            return false;
+        }
+        key += '/';
+        return -1 === key.indexOf('/.git/') && -1 === key.indexOf('/node_modules/');
+    }, true);
     for (let path in paths) {
         to = path;
         if (/^[_.]/.test(file.name(path))) {
