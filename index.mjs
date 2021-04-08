@@ -109,7 +109,7 @@ const JS_NAME = "" === args['js-name'] ? false : args['js-name'];
 
 let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
 let readMe = (file.getContent(DIR_FROM + '/README.md') || "").trim();
-let state = JSON.parse(file.getContent('package.json')) || {};
+let state = JSON.parse(file.getContent(DIR + '/package.json') || '{}');
 
 state.year = (new Date).getFullYear();
 
@@ -184,7 +184,12 @@ if (CLEAN) {
 }
 
 function factory(x, then, state) {
+    x = x.replace(/\s+/g, "");
     paths = folder.getContent(DIR_FROM, (value, key) => {
+        // Skip hidden file/folder
+        if (/^[_.]/.test(file.name(key))) {
+            return false;
+        }
         if (1 === value && -1 === (',' + x + ',').indexOf(',' + file.x(key) + ',')) {
             return false;
         }
@@ -192,11 +197,7 @@ function factory(x, then, state) {
         return -1 === key.indexOf('/.git/') && -1 === key.indexOf('/node_modules/');
     }, true);
     for (let path in paths) {
-        to = path;
-        if (/^[_.]/.test(file.name(path))) {
-            continue; // Skip hidden file/folder
-        }
-        to = to.replace(DIR_FROM + '/', DIR_TO + '/');
+        to = path.replace(DIR_FROM + '/', DIR_TO + '/');
         if (!folder.get(v = file.parent(to))) {
             folder.set(v || '.', true);
         }
@@ -209,7 +210,7 @@ function factory(x, then, state) {
         }
         content = file.getContent(path);
         content = file.parseContent(content, state);
-        to = to.replace(new RegExp('\\.' + x + '$'), "");
+        to = to.replace(new RegExp('\\.(' + x.replace(/[,]/g, '|') + ')$'), "");
         then(path, to, content);
     }
 }
@@ -232,7 +233,7 @@ function isFileStale(from, to) {
     return from.mtime.getTime() > to.mtime.getTime();
 }
 
-factory('mjs', function(from, to, content) {
+factory('mjs,ts', function(from, to, content) {
     if (!/\.js$/.test(to)) {
         to += '.js';
     }
@@ -254,7 +255,7 @@ factory('mjs', function(from, to, content) {
                 sourcemap: false
             },
             plugins: [
-                babel({
+                babel(state.babel || {
                     babelHelpers: 'bundled',
                     plugins: [
                         ['@babel/plugin-proposal-class-properties', {
