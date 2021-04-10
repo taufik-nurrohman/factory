@@ -31,6 +31,16 @@ const args = yargs(process.argv.slice(2))
             describe: 'Folder to store the source files',
             type: 'string'
         },
+        'js-bottom': {
+            default: "",
+            describe: 'Insert string at the bottom of the file',
+            type: 'string'
+        },
+        'js-external': {
+            default: "",
+            describe: 'JavaScript external module names',
+            type: 'string'
+        },
         'js-format': {
             default: 'iife',
             describe: 'JavaScript module format',
@@ -44,6 +54,11 @@ const args = yargs(process.argv.slice(2))
         'js-name': {
             default: "",
             describe: 'JavaScript module name',
+            type: 'string'
+        },
+        'js-top': {
+            default: "",
+            describe: 'Insert string at the top of the file',
             type: 'string'
         },
         'mjs': {
@@ -98,6 +113,7 @@ if (!folder.get(DIR_TO)) {
     !SILENT && console.info('Create folder `' + relative(DIR_TO) + '`');
 }
 
+const JS_EXTERNAL = (args['js-external'] || "").split(/\s*,\s*/);
 const JS_FORMAT = args['js-format'];
 const JS_GLOBALS = {};
 const JS_NAME = "" === args['js-name'] ? false : args['js-name'];
@@ -240,10 +256,21 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
         }
     }
     if (isFileStale(from, to)) {
+        let top = args['js-top'];
+        let bottom = args['js-bottom'];
+        if (top) {
+            top = file.parseContent(top, state);
+        }
+        if (bottom) {
+            bottom = file.parseContent(bottom, state);
+        }
         const c = {
             input: 'entry',
             output: {
+                banner: top,
+                external: JS_EXTERNAL,
                 file: to,
+                footer: bottom,
                 format: JS_FORMAT,
                 globals: JS_GLOBALS,
                 name: JS_NAME,
