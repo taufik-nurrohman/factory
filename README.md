@@ -61,6 +61,7 @@ Key | Description
 `--clean` | Clean-up the old compiled files before re-compile (default to `true`).
 `--from` | Folder path to store the files to be compiled (default to `"src"`).
 `--js-bottom` | Insert string at the bottom of the file (default to `""`).
+`--js-exports` | What [export mode](https://rollupjs.org/guide/en/#outputexports) to use? (default to `"auto"`).
 `--js-external` | JavaScript [external module names](https://rollupjs.org/guide/en/#quick-start) (default to `""`).
 `--js-format` | JavaScript [module format](https://rollupjs.org/guide/en/#quick-start) (default to `"iife"`).
 `--js-globals` | JavaScript global variables (default to `""`). Example: `--js-globals="jquery:jQuery,react:React,vue:Vue"`.

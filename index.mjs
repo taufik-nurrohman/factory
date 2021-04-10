@@ -36,6 +36,11 @@ const args = yargs(process.argv.slice(2))
             describe: 'Insert string at the bottom of the file',
             type: 'string'
         },
+        'js-exports': {
+            default: 'auto',
+            describe: 'What export mode to use?',
+            type: 'string'
+        },
         'js-external': {
             default: "",
             describe: 'JavaScript external module names',
@@ -268,6 +273,8 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
             input: 'entry',
             output: {
                 banner: top,
+                esModule: false,
+                exports: args['js-exports'],
                 external: JS_EXTERNAL,
                 file: to,
                 footer: bottom,
