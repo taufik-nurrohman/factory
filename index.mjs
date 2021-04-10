@@ -232,9 +232,6 @@ function isFileStale(from, to) {
 }
 
 factory('jsx,mjs,ts,tsx', function(from, to, content) {
-    if (!/\.js$/.test(to)) {
-        to += '.js';
-    }
     // Generate Node.js module…
     if (INCLUDE_MJS) {
         if (isFileStale(from, v = to.replace(/\.js$/, '.mjs'))) {
@@ -305,9 +302,6 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
 }, state);
 
 factory('pug', function(from, to, content) {
-    if (!/\.html$/.test(to)) {
-        to += '.html';
-    }
     if (INCLUDE_PUG) {
         if (isFileStale(from, v = to.replace(/\.html$/, '.pug'))) {
             file.setContent(v, content);
@@ -339,9 +333,6 @@ factory('pug', function(from, to, content) {
 }, state);
 
 factory('scss', function(from, to, content) {
-    if (!/\.css$/.test(to)) {
-        to += '.css';
-    }
     if (INCLUDE_SCSS) {
         if (isFileStale(from, v = to.replace(/\.css$/, '.scss'))) {
             file.setContent(v, content);
@@ -379,9 +370,6 @@ factory('scss', function(from, to, content) {
 // destination folder. To include the `.txt` part to the destination folder, be
 // sure to double the `.txt` suffix after the file name. Example: `LICENSE.txt.txt`
 factory('txt', function(from, to, content) {
-    // if (!/\.txt$/.test(to)) {
-    //     to += '.txt';
-    // }
     if (isFileStale(from, to)) {
         file.setContent(to, content);
         !SILENT && console.info('Create file `' + relative(to) + '`');
