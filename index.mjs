@@ -108,13 +108,11 @@ const JS_NAME = "" === args['js-name'] ? false : args['js-name'];
 });
 
 let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
-let readMe = (file.getContent(DIR_FROM + '/README.md') || "").trim();
 let state = JSON.parse(file.getContent(DIR + '/package.json') || '{}');
 
 state.year = (new Date).getFullYear();
 
 license = file.parseContent(license, state);
-readMe = file.parseContent(readMe, state);
 
 let licenseCSS = '/*!\n *\n * ' + license.replace(/\n(\S)/g, '\n * $1').replace(/\n\n/g, '\n *\n') + '\n *\n */';
 let licenseHTML = '<!--\n\n' + license + '\n\n-->';
@@ -233,7 +231,7 @@ function isFileStale(from, to) {
     return from.mtime.getTime() > to.mtime.getTime();
 }
 
-factory('mjs,ts', function(from, to, content) {
+factory('jsx,mjs,ts,tsx', function(from, to, content) {
     if (!/\.js$/.test(to)) {
         to += '.js';
     }
@@ -307,9 +305,9 @@ factory('mjs,ts', function(from, to, content) {
 }, state);
 
 factory('pug', function(from, to, content) {
-    // if (!/\.html$/.test(to)) {
-    //     to += '.html';
-    // }
+    if (!/\.html$/.test(to)) {
+        to += '.html';
+    }
     if (INCLUDE_PUG) {
         if (isFileStale(from, v = to.replace(/\.html$/, '.pug'))) {
             file.setContent(v, content);
@@ -377,12 +375,15 @@ factory('scss', function(from, to, content) {
     }
 }, state);
 
-if (license && isFileStale(DIR_FROM + '/LICENSE', v = DIR_TO + '/LICENSE')) {
-    file.setContent(v, license);
-    !SILENT && console.info('Create file `' + relative(v) + '`');
-}
-
-if (readMe && isFileStale(DIR_FROM + '/README.md', v = DIR_TO + '/README.md')) {
-    file.setContent(v, readMe);
-    !SILENT && console.info('Create file `' + relative(v) + '`');
-}
+// File(s) that ends with `.txt` extension will not include the `.txt` part to the
+// destination folder. To include the `.txt` part to the destination folder, be
+// sure to double the `.txt` suffix after the file name. Example: `LICENSE.txt.txt`
+factory('txt', function(from, to, content) {
+    // if (!/\.txt$/.test(to)) {
+    //     to += '.txt';
+    // }
+    if (isFileStale(from, to)) {
+        file.setContent(to, content);
+        !SILENT && console.info('Create file `' + relative(to) + '`');
+    }
+}, state);

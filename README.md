@@ -41,6 +41,8 @@ File extension from the source folder will be removed. Make sure to name your fi
  - `index.html.pug`
  - `index.js.mjs`
  - `index.php.pug`
+ - `LICENSE.txt`
+ - `LICENSE.txt.txt`
 
 So that in the distributable folder, your files will be renamed to:
 
@@ -48,6 +50,8 @@ So that in the distributable folder, your files will be renamed to:
  - `index.html`
  - `index.js`
  - `index.php`
+ - `LICENSE`
+ - `LICENSE.txt`
 
 Options
 -------
