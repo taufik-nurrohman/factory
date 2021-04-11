@@ -270,49 +270,53 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
             bottom = file.parseContent(bottom, state);
         }
         const c = {
-            input: 'entry',
+            input: {
+                input: 'entry',
+                external: JS_EXTERNAL,
+                plugins: [
+                    babel(state.babel || {
+                        babelHelpers: 'bundled',
+                        plugins: [
+                            ['@babel/plugin-proposal-class-properties', {
+                                loose: true
+                            }],
+                            ['@babel/plugin-proposal-private-methods', {
+                                loose: true
+                            }]
+                        ],
+                        presets: [
+                            ['@babel/preset-env', {
+                                loose: true,
+                                modules: false,
+                                targets: '>0.25%'
+                            }]
+                        ]
+                    }),
+                    resolve(),
+                    virtual({
+                        entry: content
+                    })
+                ]
+            },
             output: {
                 banner: top,
                 esModule: false,
                 exports: args['js-exports'],
-                external: JS_EXTERNAL,
                 file: to,
                 footer: bottom,
                 format: JS_FORMAT,
                 globals: JS_GLOBALS,
                 name: JS_NAME,
+                plugins: [
+                    getBabelOutputPlugin({
+                        allowAllFormats: true
+                    })
+                ],
                 sourcemap: false
-            },
-            plugins: [
-                babel(state.babel || {
-                    babelHelpers: 'bundled',
-                    plugins: [
-                        ['@babel/plugin-proposal-class-properties', {
-                            loose: true
-                        }],
-                        ['@babel/plugin-proposal-private-methods', {
-                            loose: true
-                        }]
-                    ],
-                    presets: [
-                        ['@babel/preset-env', {
-                            loose: true,
-                            modules: false,
-                            targets: '>0.25%'
-                        }]
-                    ]
-                }),
-                getBabelOutputPlugin({
-                    allowAllFormats: true
-                }),
-                resolve(),
-                virtual({
-                    entry: content
-                })
-            ]
+            }
         };
         (async () => {
-            const generator = await rollup(c);
+            const generator = await rollup(c.input);
             await generator.write(c.output);
             await generator.close();
             // Generate browser module…
