@@ -128,7 +128,7 @@ const JS_NAME = "" === args['js-name'] ? false : args['js-name'];
     JS_GLOBALS[v[0]] = v[1];
 });
 
-let license = (file.getContent(DIR_FROM + '/LICENSE') || "").trim();
+let license = (file.getContent(DIR_FROM + '/LICENSE') || file.getContent(DIR_FROM + '/LICENSE.txt') || "").trim();
 let state = JSON.parse(file.getContent(DIR + '/package.json') || '{}');
 
 state.year = (new Date).getFullYear();
