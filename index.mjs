@@ -205,6 +205,10 @@ if (CLEAN) {
 function factory(x, then, state) {
     x = x.replace(/\s+/g, "");
     paths = folder.getContent(DIR_FROM, (value, key) => {
+        // Skip file/folder in hidden folder
+        if (/\/[_.]/.test(key)) {
+            return false;
+        }
         // Skip hidden file/folder
         if (/^[_.]/.test(file.name(key))) {
             return false;
@@ -380,6 +384,7 @@ factory('scss', function(from, to, content) {
     if (isFileStale(from, to)) {
         sass.render({
             data: content,
+            includePaths: [file.parent(from)],
             outputStyle: 'compact'
         }, (error, result) => {
             if (error) {
