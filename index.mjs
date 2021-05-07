@@ -206,7 +206,7 @@ function factory(x, then, state) {
     x = x.replace(/\s+/g, "");
     paths = folder.getContent(DIR_FROM, (value, key) => {
         // Skip file/folder in hidden folder
-        if (/\/[_.]/.test(key)) {
+        if (/\/[_.]/.test(key.replace(DIR_FROM, ""))) {
             return false;
         }
         // Skip hidden file/folder
