@@ -5,22 +5,22 @@
   },
   "bugs": "https://github.com/taufik-nurrohman/factory/issues",
   "dependencies": {
-    "@babel/core": "^7.14.0",
+    "@babel/core": "^7.14.3",
     "@babel/plugin-proposal-class-properties": "^7.13.0",
     "@babel/plugin-proposal-private-methods": "^7.13.0",
-    "@babel/preset-env": "^7.14.0",
+    "@babel/preset-env": "^7.14.2",
     "@rollup/plugin-babel": "^5.3.0",
-    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-virtual": "^2.0.3",
-    "@taufik-nurrohman/file": "^0.0.10",
-    "@taufik-nurrohman/folder": "^0.1.1",
+    "@taufik-nurrohman/file": "^0.0.11",
+    "@taufik-nurrohman/folder": "^0.1.2",
     "clean-css": "^5.1.2",
     "js-beautify": "^1.13.13",
-    "node-sass": "^5.0.0",
+    "node-sass": "^6.0.0",
     "pug": "^3.0.2",
-    "rollup": "^2.46.0",
+    "rollup": "^2.50.2",
     "terser": "^5.7.0",
-    "yargs": "^16.2.0"
+    "yargs": "^17.0.1"
   },
   "description": "Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, Pug and SCSS files.",
   "files": [
@@ -44,5 +44,5 @@
     "url": "git+https://github.com/taufik-nurrohman/factory.git"
   },
   "type": "module",
-  "version": "0.1.14"
+  "version": "0.1.15"
 }
