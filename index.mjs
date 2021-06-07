@@ -98,8 +98,8 @@ const args = yargs(process.argv.slice(2))
 
 const CLEAN = args.clean;
 const DIR = process.cwd();
-const DIR_FROM = normalize(DIR + '/' + args.from);
-const DIR_TO = normalize(DIR + '/' + args.to);
+const DIR_FROM = normalize(DIR + ('.' === args.from ? "" : '/' + args.from));
+const DIR_TO = normalize(DIR + ('.' === args.to ? "" : '/' + args.to));
 const SILENT = args.silent;
 
 const INCLUDE_MJS = args.mjs;
