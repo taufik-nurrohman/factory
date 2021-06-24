@@ -206,7 +206,7 @@ function factory(x, then, state) {
     x = x.replace(/\s+/g, "");
     paths = folder.getContent(DIR_FROM, (value, key) => {
         // Skip file/folder in hidden folder
-        if (/\/[_.]/.test(key.replace(DIR_FROM, ""))) {
+        if (/[\\\/][_.]/.test(key.replace(DIR_FROM, ""))) {
             return false;
         }
         // Skip hidden file/folder
@@ -221,6 +221,7 @@ function factory(x, then, state) {
     }, true);
     for (let path in paths) {
         to = path.replace(DIR_FROM + '/', DIR_TO + '/');
+        to = path.replace(DIR_FROM + '\\', DIR_TO + '\\'); // Windows
         if (!folder.get(v = file.parent(to))) {
             folder.set(v || '.', true);
         }
