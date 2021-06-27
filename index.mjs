@@ -96,17 +96,19 @@ const args = yargs(process.argv.slice(2))
     .help()
     .argv;
 
+const normalizePath = path => path.replace(/\\/g, '/');
+
 const CLEAN = args.clean;
-const DIR = process.cwd();
-const DIR_FROM = normalize(DIR + ('.' === args.from ? "" : '/' + args.from));
-const DIR_TO = normalize(DIR + ('.' === args.to ? "" : '/' + args.to));
+const DIR = normalizePath(process.cwd());
+const DIR_FROM = normalizePath(normalize(DIR + ('.' === args.from ? "" : '/' + args.from)));
+const DIR_TO = normalizePath(normalize(DIR + ('.' === args.to ? "" : '/' + args.to)));
 const SILENT = args.silent;
 
 const INCLUDE_MJS = args.mjs;
 const INCLUDE_PUG = args.pug;
 const INCLUDE_SCSS = args.scss;
 
-const relative = path => path.replace(DIR, '.');
+const relative = path => normalizePath(path).replace(DIR, '.');
 
 if (!folder.get(DIR_FROM)) {
     !SILENT && console.error('Folder `' + relative(DIR_FROM) + '` does not exist.');
@@ -172,24 +174,25 @@ let content, paths, to, v, x;
 if (CLEAN) {
     !SILENT && console.info('Clean-up folder `' + relative(DIR_TO) + '`');
     paths = folder.getContent(DIR_TO, (value, key) => {
-        key += '/';
+        key = normalizePath(key) + '/';
         return -1 === key.indexOf('/.git/') && -1 === key.indexOf('/node_modules/');
     }, true);
     for (let path in paths) {
-        v = path + '/';
+        v = normalizePath(path) + '/';
         if (v.startsWith(DIR_FROM + '/') || (DIR_FROM + '/').startsWith(v)) {
             continue;
         }
+        v = v.slice(0, -1);
         if (
             // Skip hidden file/folder such as `.gitattributes` and `.gitignore`
-            path.startsWith(DIR + '/.') ||
+            v.startsWith(DIR + '/.') ||
             // Skip special file
-            path === DIR + '/LICENSE' ||
-            path === DIR + '/README.md' ||
-            path === DIR + '/composer.json' ||
-            path === DIR + '/composer.lock' ||
-            path === DIR + '/package-lock.json' ||
-            path === DIR + '/package.json'
+            v === DIR + '/LICENSE' ||
+            v === DIR + '/README.md' ||
+            v === DIR + '/composer.json' ||
+            v === DIR + '/composer.lock' ||
+            v === DIR + '/package-lock.json' ||
+            v === DIR + '/package.json'
         ) {
             !SILENT && console.info('Skip file `' + relative(path) + '`');
             continue;
@@ -205,8 +208,9 @@ if (CLEAN) {
 function factory(x, then, state) {
     x = x.replace(/\s+/g, "");
     paths = folder.getContent(DIR_FROM, (value, key) => {
+        key = normalizePath(key);
         // Skip file/folder in hidden folder
-        if (/[\\\/][_.]/.test(key.replace(DIR_FROM, ""))) {
+        if (/\/[_.]/.test(key.replace(DIR_FROM, ""))) {
             return false;
         }
         // Skip hidden file/folder
@@ -220,8 +224,7 @@ function factory(x, then, state) {
         return -1 === key.indexOf('/.git/') && -1 === key.indexOf('/node_modules/');
     }, true);
     for (let path in paths) {
-        to = path.replace(DIR_FROM + '/', DIR_TO + '/');
-        to = path.replace(DIR_FROM + '\\', DIR_TO + '\\'); // Windows
+        to = normalizePath(path).replace(DIR_FROM + '/', DIR_TO + '/');
         if (!folder.get(v = file.parent(to))) {
             folder.set(v || '.', true);
         }

@@ -5,20 +5,20 @@
   },
   "bugs": "https://github.com/taufik-nurrohman/factory/issues",
   "dependencies": {
-    "@babel/core": "^7.14.3",
-    "@babel/plugin-proposal-class-properties": "^7.13.0",
-    "@babel/plugin-proposal-private-methods": "^7.13.0",
-    "@babel/preset-env": "^7.14.2",
+    "@babel/core": "^7.14.6",
+    "@babel/plugin-proposal-class-properties": "^7.14.5",
+    "@babel/plugin-proposal-private-methods": "^7.14.5",
+    "@babel/preset-env": "^7.14.7",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@rollup/plugin-virtual": "^2.0.3",
     "@taufik-nurrohman/file": "^0.0.11",
     "@taufik-nurrohman/folder": "^0.1.2",
-    "clean-css": "^5.1.2",
-    "js-beautify": "^1.13.13",
-    "node-sass": "^6.0.0",
+    "clean-css": "^5.1.3",
+    "js-beautify": "^1.14.0",
+    "node-sass": "^6.0.1",
     "pug": "^3.0.2",
-    "rollup": "^2.50.2",
+    "rollup": "^2.52.3",
     "terser": "^5.7.0",
     "yargs": "^17.0.1"
   },
@@ -44,5 +44,5 @@
     "url": "git+https://github.com/taufik-nurrohman/factory.git"
   },
   "type": "module",
-  "version": "0.1.17"
+  "version": "0.1.18"
 }
