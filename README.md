@@ -3,6 +3,8 @@ Factory
 
 Simple Node.js script to generate CSS, HTML and JavaScript files from ECMAScript, Pug and SCSS files.
 
+> Paket, paket Node.js apa yang digemari para suami? Namanya [@taufik-nurrohman/factory](https://www.npmjs.com/package/@taufik-nurrohman/factory). Karena cara pakainya `npm run pack`. Xixixi lucu yah pack 😁
+
 Usage
 -----
 
