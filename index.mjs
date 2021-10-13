@@ -330,9 +330,15 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
             // Generate browser module…
             content = file.getContent(to);
             file.setContent(to, beautify.js(content, {
+                end_with_newline: false,
+                eol: '\n',
                 indent_char: ' ',
                 indent_size: 4,
-                preserve_newlines: false
+                preserve_newlines: false,
+                space_after_anon_function: false,
+                space_after_named_function: false,
+                space_in_empty_paren: false,
+                space_in_paren: false
             }));
             !SILENT && console.info('Create file `' + relative(to) + '`');
             minify(content, {
@@ -362,16 +368,30 @@ factory('pug', function(from, to, content) {
         });
         file.setContent(to, beautify.html(pug(state), {
             css: {
+                end_with_newline: false,
+                eol: '\n',
+                indent_char: ' ',
+                indent_size: 2,
                 newline_between_rules: false,
                 selector_separator_newline: true,
                 space_around_combinator: true
             },
+            end_with_newline: false,
+            eol: '\n',
             extra_liners: [],
             indent_char: ' ',
             indent_inner_html: true,
             indent_size: 2,
             js: {
-                indent_size: 4
+                end_with_newline: false,
+                eol: '\n',
+                indent_char: ' ',
+                indent_size: 4,
+                preserve_newlines: false,
+                space_after_anon_function: false,
+                space_after_named_function: false,
+                space_in_empty_paren: false,
+                space_in_paren: false
             }
         }));
         !SILENT && console.info('Create file `' + relative(to) + '`');
@@ -395,6 +415,8 @@ factory('scss', function(from, to, content) {
                 throw error;
             }
             file.setContent(to, beautify.css(v = result.css.toString(), {
+                end_with_newline: false,
+                eol: '\n',
                 indent_char: ' ',
                 indent_size: 2,
                 newline_between_rules: false,

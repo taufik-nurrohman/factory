@@ -47,5 +47,5 @@
     "test": "node index.mjs --from=test --js-name=test --to=public"
   },
   "type": "module",
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
