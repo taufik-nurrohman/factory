@@ -1,0 +1,16 @@
+$background: #fff;
+$color: #000;
+
+:root {
+  background: $background;
+  color: $color;
+  body {
+    font-family: sans-serif;
+    &.is-dark {
+      $background: #000;
+      $color: #fff;
+      background: $background;
+      color: $color;
+    }
+  }
+}

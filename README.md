@@ -26,7 +26,7 @@ Create a `scripts` field that runs the `pack` command in `.\my-project\package.j
 ~~~ json
 {
   "scripts": {
-    "build": "pack --from=src --to=dist"
+    "pack": "pack --from=src --to=dist"
   }
 }
 ~~~
@@ -34,7 +34,7 @@ Create a `scripts` field that runs the `pack` command in `.\my-project\package.j
 Generate the production ready files this way:
 
 ~~~ sh
-$ npm run build
+$ npm run pack
 ~~~
 
 File extension from the source folder will be removed. Make sure to name your files with two file extension like so:

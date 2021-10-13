@@ -5,7 +5,7 @@ import * as folder from '@taufik-nurrohman/folder';
 import beautify from 'js-beautify';
 import cleancss from 'clean-css';
 import resolve from '@rollup/plugin-node-resolve';
-import sass from 'node-sass';
+import sass from 'sass';
 import virtual from '@rollup/plugin-virtual';
 import yargs from 'yargs';
 import {babel, getBabelOutputPlugin} from '@rollup/plugin-babel';
@@ -389,7 +389,7 @@ factory('scss', function(from, to, content) {
         sass.render({
             data: content,
             includePaths: [file.parent(from)],
-            outputStyle: 'compact'
+            outputStyle: 'expanded'
         }, (error, result) => {
             if (error) {
                 throw error;
