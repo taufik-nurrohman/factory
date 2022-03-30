@@ -4,16 +4,17 @@ import * as file from '@taufik-nurrohman/file';
 import * as folder from '@taufik-nurrohman/folder';
 import beautify from 'js-beautify';
 import cleancss from 'clean-css';
-import resolve from '@rollup/plugin-node-resolve';
+import resolvePackage from '@rollup/plugin-node-resolve';
 import sass from 'sass';
 import virtual from '@rollup/plugin-virtual';
 import yargs from 'yargs';
 import {babel, getBabelOutputPlugin} from '@rollup/plugin-babel';
 import {compile} from 'pug';
 import {minify} from 'terser';
-import {normalize} from 'path';
+import {resolve} from 'path';
 import {rollup} from 'rollup';
 import {statSync} from 'fs';
+import {toCount} from '@taufik-nurrohman/to';
 import {token, toPattern} from '@taufik-nurrohman/pattern';
 
 const minifier = new cleancss({
@@ -101,8 +102,8 @@ const normalizePath = path => path.replace(/\\/g, '/');
 
 const CLEAN = args.clean;
 const DIR = normalizePath(process.cwd());
-const DIR_FROM = normalizePath(normalize(DIR + ('.' === args.from ? "" : '/' + args.from)));
-const DIR_TO = normalizePath(normalize(DIR + ('.' === args.to ? "" : '/' + args.to)));
+const DIR_FROM = normalizePath(resolve(DIR + ('.' === args.from ? "" : '/' + args.from)));
+const DIR_TO = normalizePath(resolve(DIR + ('.' === args.to ? "" : '/' + args.to)));
 const SILENT = args.silent;
 
 const INCLUDE_MJS = args.mjs;
@@ -112,11 +113,18 @@ const INCLUDE_SCSS = args.scss;
 const relative = path => normalizePath(path).replace(DIR, '.');
 
 // Fix #1
-function resolveRelative() {
+function resolveRelative({parent, self}) {
     return {
         resolveId: function(file, origin) {
-            if (file.startsWith('./') || file.startsWith('../')) {
-                return normalizePath(normalize(DIR_FROM + '/' + file));
+            if (file.startsWith('../')) {
+                // There is no way I can get the parent folder of this import when `origin` is a virtual entry :(
+                // If you have a better solution for this please let me know, thanks!
+                parent += '/0'.repeat(toCount(file.split('../')) - 1);
+                // console.log([parent, file, normalizePath(resolve(parent + '/' + file))]);
+                return normalizePath(resolve(parent + '/' + file));
+            }
+            if (file.startsWith('./')) {
+                return normalizePath(resolve(parent + '/' + file));
             }
             return null; // Continue to the next task(s)!
         }
@@ -313,8 +321,11 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
                             }]
                         ]
                     }),
-                    resolveRelative(),
-                    resolve({
+                    resolveRelative({
+                        parent: file.parent(from),
+                        self: from
+                    }),
+                    resolvePackage({
                         moduleDirectories: ['node_modules']
                     }),
                     virtual({
