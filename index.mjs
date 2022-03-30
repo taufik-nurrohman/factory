@@ -111,6 +111,19 @@ const INCLUDE_SCSS = args.scss;
 
 const relative = path => normalizePath(path).replace(DIR, '.');
 
+// Fix #1
+function resolveRelative() {
+    return {
+        resolveId: function(file, origin) {
+            console.log([file]);
+            if (file.startsWith('./') || file.startsWith('../')) {
+                return normalizePath(normalize(DIR_FROM + '/' + file));
+            }
+            return null; // Continue to the next task(s)!
+        }
+    };
+}
+
 if (!folder.get(DIR_FROM)) {
     !SILENT && console.error('Folder `' + relative(DIR_FROM) + '` does not exist.');
     process.exit();
@@ -301,23 +314,12 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
                             }]
                         ]
                     }),
+                    resolveRelative(),
                     resolve({
-                        moduleDirectories: ['node_modules', args.from]
+                        moduleDirectories: ['node_modules']
                     }),
                     virtual({
-                        entry: content.replace(toPattern('\\b(import)\\s+(\\{[^\\}"\\\']+\\}|\\S+)\\s+(from)\\s+(' + token('"') + '|' + token("'") + ')\\s*([;\\n])'), (any, importStr, importArgs, fromStr, fromArgs, end) => {
-                            // Check if import path is prefixed by `./` and then remove it! This is required because
-                            // `@rollup/plugin-node-resolve` does not resolve local file import, somehow. The easiest
-                            // solution for now is to add extra `moduleDirectories` folder path to look for other than
-                            // `node_modules`, but this solution does not count `./` as part of module name. Hacky! :(
-                            // If anyone knows more about this please give me some advice, thanks!
-                            if (fromArgs.startsWith('"./') || fromArgs.startsWith("'./") && file.isFile(DIR_FROM + '/' + fromArgs.slice(2, -1))) {
-                                fromArgs = fromArgs.replace(/\.(?:jsx|mjs|ts|tsx)(["'])$/, '$1');
-                                fromArgs = fromArgs.replace(/^(["'])\.\//, '$1'); // TODO: Normalize `../` too!
-                                return importStr + ' ' + importArgs + ' ' + fromStr + ' ' + fromArgs + end;
-                            }
-                            return any;
-                        })
+                        entry: content
                     })
                 ]
             },
