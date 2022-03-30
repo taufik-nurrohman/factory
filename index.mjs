@@ -115,7 +115,6 @@ const relative = path => normalizePath(path).replace(DIR, '.');
 function resolveRelative() {
     return {
         resolveId: function(file, origin) {
-            console.log([file]);
             if (file.startsWith('./') || file.startsWith('../')) {
                 return normalizePath(normalize(DIR_FROM + '/' + file));
             }
