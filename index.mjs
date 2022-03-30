@@ -14,6 +14,7 @@ import {minify} from 'terser';
 import {normalize} from 'path';
 import {rollup} from 'rollup';
 import {statSync} from 'fs';
+import {token, toPattern} from '@taufik-nurrohman/pattern';
 
 const minifier = new cleancss({
     level: 2
@@ -300,9 +301,23 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
                             }]
                         ]
                     }),
-                    resolve(),
+                    resolve({
+                        moduleDirectories: ['node_modules', args.from]
+                    }),
                     virtual({
-                        entry: content
+                        entry: content.replace(toPattern('\\b(import)\\s+(\\{[^\\}"\\\']+\\}|\\S+)\\s+(from)\\s+(' + token('"') + '|' + token("'") + ')\\s*([;\\n])'), (any, importStr, importArgs, fromStr, fromArgs, end) => {
+                            // Check if import path is prefixed by `./` and then remove it! This is required because
+                            // `@rollup/plugin-node-resolve` does not resolve local file import, somehow. The easiest
+                            // solution for now is to add extra `moduleDirectories` folder path to look for other than
+                            // `node_modules`, but this solution does not count `./` as part of module name. Hacky! :(
+                            // If anyone knows more about this please give me some advice, thanks!
+                            if (fromArgs.startsWith('"./') || fromArgs.startsWith("'./") && file.isFile(DIR_FROM + '/' + fromArgs.slice(2, -1))) {
+                                fromArgs = fromArgs.replace(/\.(?:jsx|mjs|ts|tsx)(["'])$/, '$1');
+                                fromArgs = fromArgs.replace(/^(["'])\.\//, '$1'); // TODO: Normalize `../` too!
+                                return importStr + ' ' + importArgs + ' ' + fromStr + ' ' + fromArgs + end;
+                            }
+                            return any;
+                        })
                     })
                 ]
             },

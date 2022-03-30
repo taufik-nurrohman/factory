@@ -1,3 +1,5 @@
+import prefix from './_part.mjs';
+
 export default function foo() {
-    return 'bar';
+    return prefix() + ' bar';
 }
