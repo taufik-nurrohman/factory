@@ -14,7 +14,6 @@
     "@rollup/plugin-virtual": "^2.1.0",
     "@taufik-nurrohman/file": "^0.0.11",
     "@taufik-nurrohman/folder": "^0.1.2",
-    "@taufik-nurrohman/pattern": "^0.1.7",
     "clean-css": "^5.2.4",
     "js-beautify": "^1.14.0",
     "pug": "^3.0.2",
@@ -45,8 +44,8 @@
     "url": "git+https://github.com/taufik-nurrohman/factory.git"
   },
   "scripts": {
-    "test": "node index.mjs --from=test --js-name=test --to=public"
+    "test": "node index.mjs --from=test --js-name=test --to=result"
   },
   "type": "module",
-  "version": "1.0.7"
+  "version": "1.0.8"
 }

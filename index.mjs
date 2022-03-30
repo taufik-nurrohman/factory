@@ -14,8 +14,6 @@ import {minify} from 'terser';
 import {resolve} from 'path';
 import {rollup} from 'rollup';
 import {statSync} from 'fs';
-import {toCount} from '@taufik-nurrohman/to';
-import {token, toPattern} from '@taufik-nurrohman/pattern';
 
 const minifier = new cleancss({
     level: 2
@@ -113,14 +111,14 @@ const INCLUDE_SCSS = args.scss;
 const relative = path => normalizePath(path).replace(DIR, '.');
 
 // Fix #1
-function resolveRelative({parent, self}) {
+function resolvePath({parent, self}) {
     return {
         resolveId: function(file, origin) {
+            file = normalizePath(file);
             if (file.startsWith('../')) {
                 // There is no way I can get the parent folder of this import when `origin` is a virtual entry :(
                 // If you have a better solution for this please let me know, thanks!
-                parent += '/0'.repeat(toCount(file.split('../')) - 1);
-                // console.log([parent, file, normalizePath(resolve(parent + '/' + file))]);
+                parent += '/0'.repeat(file.split('../').length - 1);
                 return normalizePath(resolve(parent + '/' + file));
             }
             if (file.startsWith('./')) {
@@ -321,7 +319,7 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
                             }]
                         ]
                     }),
-                    resolveRelative({
+                    resolvePath({
                         parent: file.parent(from),
                         self: from
                     }),
