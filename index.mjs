@@ -113,16 +113,23 @@ const relative = path => normalizePath(path).replace(DIR, '.');
 // Fix #1
 function resolvePath({parent, self}) {
     return {
-        resolveId: function(file, origin) {
-            file = normalizePath(file);
-            if (file.startsWith('../')) {
-                // There is no way I can get the parent folder of this import when `origin` is a virtual entry :(
-                // If you have a better solution for this please let me know, thanks!
-                parent += '/0'.repeat(file.split('../').length - 1);
-                return normalizePath(resolve(parent + '/' + file));
+        resolveId: function(id, origin) {
+            id = normalizePath(id);
+            if (id.startsWith('../')) {
+                if (origin && origin.startsWith(DIR)) {
+                    parent = file.parent(origin);
+                } else {
+                    // There is no way I can get the parent folder of this import when `origin` is a virtual entry :(
+                    // If you have a better solution for this please let me know, thanks!
+                    parent += '/0'.repeat(id.split('../').length - 1);
+                    if (!file.isFile(resolve(parent + '/' + id))) {
+                        parent = DIR_FROM; // Hacky! :(
+                    }
+                }
+                return normalizePath(resolve(parent + '/' + id));
             }
-            if (file.startsWith('./')) {
-                return normalizePath(resolve(parent + '/' + file));
+            if (id.startsWith('./')) {
+                return normalizePath(resolve(parent + '/' + id));
             }
             return null; // Continue to the next task(s)!
         }
@@ -333,6 +340,7 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
             },
             output: {
                 banner: top,
+                compact: true,
                 esModule: false,
                 exports: args['js-exports'],
                 file: to,
