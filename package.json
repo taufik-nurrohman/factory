@@ -48,5 +48,5 @@
     "test": "node index.mjs --from=test --js-name=test --to=result"
   },
   "type": "module",
-  "version": "1.1.0"
+  "version": "1.1.1"
 }

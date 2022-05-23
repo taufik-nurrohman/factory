@@ -196,6 +196,17 @@ state.scss = {
 
 delete state.scripts;
 
+// <https://stackoverflow.com/a/48032528/1163000>
+async function replaceAsync(content, pattern, then) {
+    const promises = [];
+    content.replace(pattern, (match, ...args) => {
+        const promise = then(match, ...args);
+        promises.push(promise);
+    });
+    const data = await Promise.all(promises);
+    return content.replace(pattern, () => data.shift());
+}
+
 let content, paths, to, v, x;
 
 if (CLEAN) {
@@ -287,12 +298,13 @@ function isFileStale(from, to) {
     return from.mtime.getTime() > to.mtime.getTime();
 }
 
-factory('jsx,mjs,ts,tsx', function(from, to, content) {
+factory('jsx,mjs,ts,tsx', async function(from, to, content) {
     // Convert `import './foo/bar.baz'` to raw code
-    content = content.replace(/\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
+    content = await replaceAsync(content, /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
         let id = $1.slice(1, -1);
         if (-1 !== id.indexOf('://')) {
-            // TODO
+            !SILENT && console.info('Fetch URL: `' + id + '`');
+            return fetch(id).then(v => v.text());
         }
         return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
@@ -314,8 +326,9 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
         }
         const c = {
             input: {
-                input: 'entry',
+                context: 'this', // <https://rollupjs.org/guide/en#context>
                 external: JS_EXTERNAL,
+                input: 'entry',
                 plugins: [
                     babel(state.babel || {
                         babelHelpers: 'bundled',
@@ -365,33 +378,31 @@ factory('jsx,mjs,ts,tsx', function(from, to, content) {
                 sourcemap: false
             }
         };
-        (async () => {
-            const generator = await rollup(c.input);
-            await generator.write(c.output);
-            await generator.close();
-            // Generate browser module…
-            content = file.getContent(to);
-            file.setContent(to, beautify.js(content, {
-                end_with_newline: false,
-                eol: '\n',
-                indent_char: ' ',
-                indent_size: 4,
-                preserve_newlines: false,
-                space_after_anon_function: false,
-                space_after_named_function: false,
-                space_in_empty_paren: false,
-                space_in_paren: false
-            }));
-            !SILENT && console.info('Create file `' + relative(to) + '`');
-            minify(content, {
-                compress: {
-                    unsafe: true
-                }
-            }).then(result => {
-                file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
-                !SILENT && console.info('Create file `' + relative(v) + '`');
-            });
-        })();
+        const generator = await rollup(c.input);
+        await generator.write(c.output);
+        await generator.close();
+        // Generate browser module…
+        content = file.getContent(to);
+        file.setContent(to, beautify.js(content, {
+            end_with_newline: false,
+            eol: '\n',
+            indent_char: ' ',
+            indent_size: 4,
+            preserve_newlines: false,
+            space_after_anon_function: false,
+            space_after_named_function: false,
+            space_in_empty_paren: false,
+            space_in_paren: false
+        }));
+        !SILENT && console.info('Create file `' + relative(to) + '`');
+        minify(content, {
+            compress: {
+                unsafe: true
+            }
+        }).then(result => {
+            file.setContent(v = to.replace(/\.js$/, '.min.js'), result.code);
+            !SILENT && console.info('Create file `' + relative(v) + '`');
+        });
     }
 }, state);
 
@@ -440,12 +451,13 @@ factory('pug', function(from, to, content) {
     }
 }, state);
 
-factory('scss', function(from, to, content) {
+factory('scss', async function(from, to, content) {
     // Convert `@import './foo/bar.baz'` to raw code
-    content = content.replace(/@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
+    content = await replaceAsync(content, /@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
         let id = $1.slice(1, -1);
         if (-1 !== id.indexOf('://')) {
-            // TODO
+            !SILENT && console.info('Fetch URL: `' + id + '`');
+            return fetch(id).then(v => v.text());
         }
         return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
