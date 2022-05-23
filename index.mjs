@@ -4,6 +4,7 @@ import * as file from '@taufik-nurrohman/file';
 import * as folder from '@taufik-nurrohman/folder';
 import beautify from 'js-beautify';
 import cleancss from 'clean-css';
+import fetch from 'node-fetch';
 import resolvePackage from '@rollup/plugin-node-resolve';
 import sass from 'sass';
 import virtual from '@rollup/plugin-virtual';
@@ -289,7 +290,11 @@ function isFileStale(from, to) {
 factory('jsx,mjs,ts,tsx', function(from, to, content) {
     // Convert `import './foo/bar.baz'` to raw code
     content = content.replace(/\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
-        return file.getContent(resolve(file.parent(from) + '/' + $1.slice(1, -1))) ?? $0;
+        let id = $1.slice(1, -1);
+        if (-1 !== id.indexOf('://')) {
+            // TODO
+        }
+        return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
     // Generate Node.js module…
     if (INCLUDE_MJS) {
@@ -438,7 +443,11 @@ factory('pug', function(from, to, content) {
 factory('scss', function(from, to, content) {
     // Convert `@import './foo/bar.baz'` to raw code
     content = content.replace(/@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
-        return file.getContent(resolve(file.parent(from) + '/' + $1.slice(1, -1))) ?? $0;
+        let id = $1.slice(1, -1);
+        if (-1 !== id.indexOf('://')) {
+            // TODO
+        }
+        return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
     if (INCLUDE_SCSS) {
         if (isFileStale(from, v = to.replace(/\.css$/, '.scss'))) {

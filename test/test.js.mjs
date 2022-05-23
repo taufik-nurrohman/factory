@@ -6,6 +6,9 @@ import parent from '../test.mjs';
 // Test inline import
 import '../test.js.txt';
 
+// Test inline import
+import 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.min.js';
+
 export default function foo() {
     return prefix() + ' bar ' + suffix() + ' ' + parent();
 }
