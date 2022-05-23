@@ -26,3 +26,6 @@ a {
 }
 
 @import './_part.scss';
+
+// Test inline import
+@import '../test.css.txt';

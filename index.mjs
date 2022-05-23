@@ -287,6 +287,10 @@ function isFileStale(from, to) {
 }
 
 factory('jsx,mjs,ts,tsx', function(from, to, content) {
+    // Convert `import './foo/bar.baz'` to raw code
+    content = content.replace(/\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
+        return file.getContent(resolve(file.parent(from) + '/' + $1.slice(1, -1))) ?? $0;
+    });
     // Generate Node.js module…
     if (INCLUDE_MJS) {
         if (isFileStale(from, v = to.replace(/\.js$/, '.mjs'))) {
@@ -432,6 +436,10 @@ factory('pug', function(from, to, content) {
 }, state);
 
 factory('scss', function(from, to, content) {
+    // Convert `@import './foo/bar.baz'` to raw code
+    content = content.replace(/@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
+        return file.getContent(resolve(file.parent(from) + '/' + $1.slice(1, -1))) ?? $0;
+    });
     if (INCLUDE_SCSS) {
         if (isFileStale(from, v = to.replace(/\.css$/, '.scss'))) {
             file.setContent(v, content);

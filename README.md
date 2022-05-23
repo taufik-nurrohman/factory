@@ -55,6 +55,16 @@ So that in the distributable folder, your files will be renamed to:
  - `LICENSE`
  - `LICENSE.txt`
 
+Invalid import statements on `*.mjs` and `*.scss` files with valid file path are likely to be imported inline:
+
+~~~ js
+import '../node_modules/bootstrap/dist/js/bootstrap.js';
+~~~
+
+~~~ css
+@import '../node_modules/bootstrap/dist/css/bootstrap.css';
+~~~
+
 Options
 -------
 
