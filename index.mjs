@@ -7,9 +7,8 @@ import cleancss from 'clean-css';
 import fetch from 'node-fetch';
 import resolvePackage from '@rollup/plugin-node-resolve';
 import sass from 'sass';
-import virtual from '@rollup/plugin-virtual';
 import yargs from 'yargs';
-import {babel, getBabelOutputPlugin} from '@rollup/plugin-babel';
+import {babel} from '@rollup/plugin-babel';
 import {compile} from 'pug';
 import {minify} from 'terser';
 import {resolve} from 'path';
@@ -119,13 +118,6 @@ function resolvePath({parent, self}) {
             if (id.startsWith('../')) {
                 if (origin && origin.startsWith(DIR)) {
                     parent = file.parent(origin);
-                } else {
-                    // There is no way I can get the parent folder of this import when `origin` is a virtual entry :(
-                    // If you have a better solution for this please let me know, thanks!
-                    parent += '/0'.repeat(id.split('../').length - 1);
-                    if (!file.isFile(resolve(parent + '/' + id))) {
-                        parent = DIR_FROM; // Hacky! :(
-                    }
                 }
                 return normalizePath(resolve(parent + '/' + id));
             }
@@ -135,6 +127,22 @@ function resolvePath({parent, self}) {
             return null; // Continue to the next task(s)!
         }
     };
+}
+
+// Download URL
+function resolveURL() {
+    return {
+        load: function(id) {
+            if (-1 !== id.indexOf('://')) {
+                !SILENT && console.info('Fetch URL: `' + id + '`');
+                return fetch(id).then(v => v.text());
+            }
+            return null; // Continue to the next task(s)!
+        },
+        resolveId: function(id) {
+            return -1 !== id.indexOf('://') ? id : null; // <https://github.com/rollup/rollup/issues/323#issuecomment-159314796>
+        }
+    }
 }
 
 if (!folder.get(DIR_FROM)) {
@@ -273,10 +281,8 @@ function factory(x, then, state) {
             }
             continue;
         }
-        content = file.getContent(path);
-        content = file.parseContent(content, state);
         to = to.replace(new RegExp('\\.(' + x.replace(/[,]/g, '|') + ')$'), "");
-        then(path, to, content);
+        then(path, to);
     }
 }
 
@@ -298,19 +304,20 @@ function isFileStale(from, to) {
     return from.mtime.getTime() > to.mtime.getTime();
 }
 
-factory('jsx,mjs,ts,tsx', async function(from, to, content) {
-    // Convert `import './foo/bar.baz'` to raw code
-    content = await replaceAsync(content, /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
-        let id = $1.slice(1, -1);
-        if (-1 !== id.indexOf('://')) {
-            !SILENT && console.info('Fetch URL: `' + id + '`');
-            return fetch(id).then(v => v.text());
-        }
-        return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
-    });
+factory('jsx,mjs,ts,tsx', async function(from, to) {
     // Generate Node.js module…
     if (INCLUDE_MJS) {
+        let v;
         if (isFileStale(from, v = to.replace(/\.js$/, '.mjs'))) {
+            // Convert `import './foo/bar.baz'` to raw code
+            let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
+                let id = $1.slice(1, -1);
+                if (-1 !== id.indexOf('://')) {
+                    !SILENT && console.info('Fetch URL: `' + id + '`');
+                    return fetch(id).then(v => v.text());
+                }
+                return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
+            });
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
         }
@@ -328,7 +335,7 @@ factory('jsx,mjs,ts,tsx', async function(from, to, content) {
             input: {
                 context: 'this', // <https://rollupjs.org/guide/en#context>
                 external: JS_EXTERNAL,
-                input: 'entry',
+                input: from,
                 plugins: [
                     babel(state.babel || {
                         babelHelpers: 'bundled',
@@ -355,9 +362,7 @@ factory('jsx,mjs,ts,tsx', async function(from, to, content) {
                     resolvePackage({
                         moduleDirectories: ['node_modules']
                     }),
-                    virtual({
-                        entry: content
-                    })
+                    resolveURL()
                 ]
             },
             output: {
@@ -370,19 +375,22 @@ factory('jsx,mjs,ts,tsx', async function(from, to, content) {
                 format: JS_FORMAT,
                 globals: JS_GLOBALS,
                 name: JS_NAME,
-                plugins: [
-                    getBabelOutputPlugin({
-                        allowAllFormats: true
-                    })
-                ],
                 sourcemap: false
             }
         };
         const generator = await rollup(c.input);
         await generator.write(c.output);
         await generator.close();
+        // Convert `import './foo/bar.baz'` to raw code
+        let content = await replaceAsync(file.parseContent(file.getContent(to), state), /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
+            let id = $1.slice(1, -1);
+            // if (-1 !== id.indexOf('://')) {
+            //     !SILENT && console.info('Fetch URL: `' + id + '`');
+            //     return fetch(id).then(v => v.text());
+            // } --> already resolved by `resolveURL()`
+            return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
+        });
         // Generate browser module…
-        content = file.getContent(to);
         file.setContent(to, beautify.js(content, {
             end_with_newline: false,
             eol: '\n',
@@ -406,8 +414,10 @@ factory('jsx,mjs,ts,tsx', async function(from, to, content) {
     }
 }, state);
 
-factory('pug', function(from, to, content) {
+factory('pug', function(from, to) {
+    let content = file.parseContent(file.getContent(from), state);
     if (INCLUDE_PUG) {
+        let v;
         if (isFileStale(from, v = to.replace(/\.html$/, '.pug'))) {
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
@@ -451,9 +461,9 @@ factory('pug', function(from, to, content) {
     }
 }, state);
 
-factory('scss', async function(from, to, content) {
+factory('scss', async function(from, to) {
     // Convert `@import './foo/bar.baz'` to raw code
-    content = await replaceAsync(content, /@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
+    let content = await replaceAsync(file.parseContent(file.getContent(from), state), /@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
         let id = $1.slice(1, -1);
         if (-1 !== id.indexOf('://')) {
             !SILENT && console.info('Fetch URL: `' + id + '`');
@@ -462,6 +472,7 @@ factory('scss', async function(from, to, content) {
         return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
     if (INCLUDE_SCSS) {
+        let v;
         if (isFileStale(from, v = to.replace(/\.css$/, '.scss'))) {
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
@@ -500,9 +511,9 @@ factory('scss', async function(from, to, content) {
 // File(s) that ends with `.txt` extension will not include the `.txt` part to the
 // destination folder. To include the `.txt` part to the destination folder, be
 // sure to double the `.txt` suffix after the file name. Example: `LICENSE.txt.txt`
-factory('txt', function(from, to, content) {
+factory('txt', function(from, to) {
     if (isFileStale(from, to)) {
-        file.setContent(to, content);
+        file.setContent(to, file.parseContent(file.getContent(from), state));
         !SILENT && console.info('Create file `' + relative(to) + '`');
     }
 }, state);

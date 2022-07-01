@@ -89,6 +89,9 @@ Key | Description
 `--js-globals` | JavaScript global variables (default to `""`). Example: `--js-globals="jquery:jQuery,react:React,vue:Vue"`.
 `--js-name` | JavaScript [module name](https://rollupjs.org/guide/en/#quick-start) (default to `""`).
 `--js-top` | Insert string at the top of the file (default to `""`).
+`--mjs` | Include MJS files to the output.
+`--pug` | Include PUG files to the output.
+`--scss` | Include SCSS files to the output.
 `--silent` | Disable logging (default to `false`).
 `--to` | Folder path to store the compiled files (default to `"dist"`).
 `--version` | Show version information.
