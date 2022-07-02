@@ -4,6 +4,7 @@ import * as file from '@taufik-nurrohman/file';
 import * as folder from '@taufik-nurrohman/folder';
 import beautify from 'js-beautify';
 import cleancss from 'clean-css';
+import commonJS from '@rollup/plugin-commonjs';
 import fetch from 'node-fetch';
 import resolvePackage from '@rollup/plugin-node-resolve';
 import sass from 'sass';
@@ -331,55 +332,53 @@ factory('jsx,mjs,ts,tsx', async function(from, to) {
         if (bottom) {
             bottom = file.parseContent(bottom, state);
         }
-        const c = {
-            input: {
-                context: 'this', // <https://rollupjs.org/guide/en#context>
-                external: JS_EXTERNAL,
-                input: from,
-                plugins: [
-                    babel(state.babel || {
-                        babelHelpers: 'bundled',
-                        plugins: [
-                            ['@babel/plugin-proposal-class-properties', {
-                                loose: true
-                            }],
-                            ['@babel/plugin-proposal-private-methods', {
-                                loose: true
-                            }]
-                        ],
-                        presets: [
-                            ['@babel/preset-env', {
-                                loose: true,
-                                modules: false,
-                                targets: '>0.25%'
-                            }]
-                        ]
-                    }),
-                    resolvePath({
-                        parent: file.parent(from),
-                        self: from
-                    }),
-                    resolvePackage({
-                        moduleDirectories: ['node_modules']
-                    }),
-                    resolveURL()
-                ]
-            },
-            output: {
-                banner: top,
-                compact: true,
-                esModule: false,
-                exports: args['js-exports'],
-                file: to,
-                footer: bottom,
-                format: JS_FORMAT,
-                globals: JS_GLOBALS,
-                name: JS_NAME,
-                sourcemap: false
-            }
-        };
-        const generator = await rollup(c.input);
-        await generator.write(c.output);
+        const generator = await rollup({
+            context: 'this', // <https://rollupjs.org/guide/en#context>
+            external: JS_EXTERNAL,
+            input: from,
+            plugins: [
+                babel(state.babel || {
+                    babelHelpers: 'bundled',
+                    plugins: [
+                        ['@babel/plugin-proposal-class-properties', {
+                            loose: true
+                        }],
+                        ['@babel/plugin-proposal-private-methods', {
+                            loose: true
+                        }]
+                    ],
+                    presets: [
+                        ['@babel/preset-env', {
+                            loose: true,
+                            modules: false,
+                            targets: '>0.25%'
+                        }]
+                    ]
+                }),
+                commonJS(),
+                resolvePath({
+                    parent: file.parent(from),
+                    self: from
+                }),
+                resolvePackage({
+                    moduleDirectories: ['node_modules']
+                }),
+                resolveURL()
+            ]
+        });
+        await generator.write({
+            banner: top,
+            compact: true,
+            esModule: false,
+            exports: args['js-exports'],
+            file: to,
+            footer: bottom,
+            format: JS_FORMAT,
+            globals: JS_GLOBALS,
+            interop: 'auto',
+            name: JS_NAME,
+            sourcemap: false
+        });
         await generator.close();
         // Convert `import './foo/bar.baz'` to raw code
         let content = await replaceAsync(file.parseContent(file.getContent(to), state), /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {

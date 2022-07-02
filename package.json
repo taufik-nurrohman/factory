@@ -10,6 +10,7 @@
     "@babel/plugin-proposal-private-methods": "^7.18.6",
     "@babel/preset-env": "^7.18.6",
     "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-commonjs": "^22.0.1",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@taufik-nurrohman/file": "*",
     "@taufik-nurrohman/folder": "*",
@@ -44,8 +45,10 @@
     "url": "git+https://github.com/taufik-nurrohman/factory.git"
   },
   "scripts": {
-    "test": "node index.mjs --from=test --js-name=test --mjs --pug --scss --to=result"
+    "test": "node index.mjs --from=test --js-name=test --mjs --pug --scss --to=result",
+    "test-cjs": "node index.mjs --js-format=cjs --from=test --js-name=test --mjs --pug --scss --to=result",
+    "test-umd": "node index.mjs --js-format=umd --from=test --js-name=test --mjs --pug --scss --to=result"
   },
   "type": "module",
-  "version": "2.0.0"
+  "version": "2.0.1"
 }
