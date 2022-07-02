@@ -50,5 +50,5 @@
     "test-umd": "node index.mjs --js-format=umd --from=test --js-name=test --mjs --pug --scss --to=result"
   },
   "type": "module",
-  "version": "2.0.1"
+  "version": "2.0.2"
 }

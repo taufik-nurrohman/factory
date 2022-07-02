@@ -369,13 +369,11 @@ factory('jsx,mjs,ts,tsx', async function(from, to) {
         await generator.write({
             banner: top,
             compact: true,
-            esModule: false,
             exports: args['js-exports'],
             file: to,
             footer: bottom,
             format: JS_FORMAT,
             globals: JS_GLOBALS,
-            interop: 'auto',
             name: JS_NAME,
             sourcemap: false
         });
