@@ -114,7 +114,7 @@ const relative = path => normalizePath(path).replace(DIR, '.');
 // Fix #1
 function resolvePath({parent, self}) {
     return {
-        resolveId: function(id, origin) {
+        resolveId: function (id, origin) {
             id = normalizePath(id);
             if (id.startsWith('../')) {
                 if (origin && origin.startsWith(DIR)) {
@@ -133,14 +133,14 @@ function resolvePath({parent, self}) {
 // Download URL
 function resolveURL() {
     return {
-        load: function(id) {
+        load: function (id) {
             if (-1 !== id.indexOf('://')) {
                 !SILENT && console.info('Fetch URL: `' + id + '`');
                 return fetch(id).then(v => v.text());
             }
             return null; // Continue to the next task(s)!
         },
-        resolveId: function(id) {
+        resolveId: function (id) {
             return -1 !== id.indexOf('://') ? id : null; // <https://github.com/rollup/rollup/issues/323#issuecomment-159314796>
         }
     }
@@ -305,7 +305,7 @@ function isFileStale(from, to) {
     return from.mtime.getTime() > to.mtime.getTime();
 }
 
-factory('jsx,mjs,ts,tsx', async function(from, to) {
+factory('jsx,mjs,ts,tsx', async function (from, to) {
     // Generate Node.js module…
     if (INCLUDE_MJS) {
         let v;
@@ -411,7 +411,7 @@ factory('jsx,mjs,ts,tsx', async function(from, to) {
     }
 }, state);
 
-factory('pug', function(from, to) {
+factory('pug', function (from, to) {
     let content = file.parseContent(file.getContent(from), state);
     if (INCLUDE_PUG) {
         let v;
@@ -458,7 +458,7 @@ factory('pug', function(from, to) {
     }
 }, state);
 
-factory('scss', async function(from, to) {
+factory('scss', async function (from, to) {
     // Convert `@import './foo/bar.baz'` to raw code
     let content = await replaceAsync(file.parseContent(file.getContent(from), state), /@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
         let id = $1.slice(1, -1);
@@ -508,7 +508,7 @@ factory('scss', async function(from, to) {
 // File(s) that ends with `.txt` extension will not include the `.txt` part to the
 // destination folder. To include the `.txt` part to the destination folder, be
 // sure to double the `.txt` suffix after the file name. Example: `LICENSE.txt.txt`
-factory('txt', function(from, to) {
+factory('txt', function (from, to) {
     if (isFileStale(from, to)) {
         file.setContent(to, file.parseContent(file.getContent(from), state));
         !SILENT && console.info('Create file `' + relative(to) + '`');
