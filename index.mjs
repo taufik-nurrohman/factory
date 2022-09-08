@@ -394,7 +394,7 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             indent_char: ' ',
             indent_size: 4,
             preserve_newlines: false,
-            space_after_anon_function: false,
+            space_after_anon_function: true,
             space_after_named_function: false,
             space_in_empty_paren: false,
             space_in_paren: false
