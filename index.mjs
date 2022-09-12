@@ -116,10 +116,10 @@ function resolvePath({parent, self}) {
     return {
         resolveId: function (id, origin) {
             id = normalizePath(id);
+            if (origin && origin.startsWith(DIR)) {
+                parent = file.parent(origin);
+            }
             if (id.startsWith('../')) {
-                if (origin && origin.startsWith(DIR)) {
-                    parent = file.parent(origin);
-                }
                 return normalizePath(resolve(parent + '/' + id));
             }
             if (id.startsWith('./')) {
@@ -317,6 +317,9 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                     !SILENT && console.info('Fetch URL: `' + id + '`');
                     return fetch(id).then(v => v.text());
                 }
+                if (['jsx', 'mjs', 'ts', 'tsx'].includes(file.x(id))) {
+                    return $0; // Native!
+                }
                 return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
             });
             file.setContent(v, content);
@@ -385,6 +388,9 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             //     !SILENT && console.info('Fetch URL: `' + id + '`');
             //     return fetch(id).then(v => v.text());
             // } --> already resolved by `resolveURL()`
+            if (['jsx', 'mjs', 'ts', 'tsx'].includes(file.x(id))) {
+                return $0; // Native!
+            }
             return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
         });
         // Generate browser module…
@@ -465,6 +471,9 @@ factory('scss', async function (from, to) {
         if (-1 !== id.indexOf('://')) {
             !SILENT && console.info('Fetch URL: `' + id + '`');
             return fetch(id).then(v => v.text());
+        }
+        if (['scss'].includes(file.x(id))) {
+            return $0; // Native!
         }
         return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
