@@ -7,10 +7,10 @@ import cleancss from 'clean-css';
 import commonJS from '@rollup/plugin-commonjs';
 import fetch from 'node-fetch';
 import resolvePackage from '@rollup/plugin-node-resolve';
-import sass from 'sass';
+import {compileString as compileSass} from 'sass';
 import yargs from 'yargs';
 import {babel} from '@rollup/plugin-babel';
-import {compile} from 'pug';
+import {compile as compilePug} from 'pug';
 import {minify} from 'terser';
 import {resolve} from 'path';
 import {rollup} from 'rollup';
@@ -427,7 +427,7 @@ factory('pug', function (from, to) {
         }
     }
     if (isFileStale(from, to)) {
-        let pug = compile(content, {
+        let pug = compilePug(content, {
             basedir: DIR_FROM,
             doctype: 'html',
             filename: from // What is this for by the way?
@@ -485,31 +485,26 @@ factory('scss', async function (from, to) {
         }
     }
     if (isFileStale(from, to)) {
-        sass.render({
-            data: content,
-            includePaths: [file.parent(from)],
-            outputStyle: 'expanded'
-        }, (error, result) => {
+        let result = compileSass(content, {
+            loadPaths: [file.parent(from)],
+            style: 'expanded'
+        });
+        file.setContent(to, beautify.css(v = result.css.toString(), {
+            end_with_newline: false,
+            eol: '\n',
+            indent_char: ' ',
+            indent_size: 2,
+            newline_between_rules: false,
+            selector_separator_newline: true,
+            space_around_combinator: true
+        }));
+        !SILENT && console.info('Create file `' + relative(to) + '`');
+        minifier.minify(v, (error, result) => {
             if (error) {
                 throw error;
             }
-            file.setContent(to, beautify.css(v = result.css.toString(), {
-                end_with_newline: false,
-                eol: '\n',
-                indent_char: ' ',
-                indent_size: 2,
-                newline_between_rules: false,
-                selector_separator_newline: true,
-                space_around_combinator: true
-            }));
-            !SILENT && console.info('Create file `' + relative(to) + '`');
-            minifier.minify(v, (error, result) => {
-                if (error) {
-                    throw error;
-                }
-                file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
-                !SILENT && console.info('Create file `' + relative(v) + '`');
-            });
+            file.setContent(v = to.replace(/\.css$/, '.min.css'), result.styles);
+            !SILENT && console.info('Create file `' + relative(v) + '`');
         });
     }
 }, state);
