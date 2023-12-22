@@ -323,7 +323,7 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                 }
                 return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
             });
-            content = content.replace(/(^|\n)\/\/[ ]*@if[ ]+umd[ ]*\n([\s\S]*?)\n\/\/[ ]*@end-?if[ ]*(\n|$)/i, "");
+            content = content.replace(/(^|\n)\/\/[ ]*@if[ ]+iife[ ]*\n([\s\S]*?)\n\/\/[ ]*@end-?if[ ]*(\n|$)/i, "");
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
         }
