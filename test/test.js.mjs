@@ -9,6 +9,10 @@ import '../test.js.txt';
 // Test inline import
 import 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.min.js';
 
+// @if umd
+window.jQuery.fn.foo = 'bar';
+// @end-if
+
 export default function foo() {
     return prefix() + ' bar ' + suffix() + ' ' + parent();
 }

@@ -7,17 +7,21 @@ import cleancss from 'clean-css';
 import commonJS from '@rollup/plugin-commonjs';
 import fetch from 'node-fetch';
 import resolvePackage from '@rollup/plugin-node-resolve';
-import {compileString as compileSass} from 'sass';
 import yargs from 'yargs';
 import {babel} from '@rollup/plugin-babel';
 import {compile as compilePug} from 'pug';
+import {compileString as compileSass} from 'sass';
 import {minify} from 'terser';
 import {resolve} from 'path';
 import {rollup} from 'rollup';
-import {statSync} from 'fs';
+import {statSync, watch} from 'fs';
 
 const minifier = new cleancss({
-    level: 2
+    level: {
+        2: {
+            restructureRules: true
+        }
+    }
 });
 
 const args = yargs(process.argv.slice(2))
@@ -119,10 +123,7 @@ function resolvePath({parent, self}) {
             if (origin && origin.startsWith(DIR)) {
                 parent = file.parent(origin);
             }
-            if (id.startsWith('../')) {
-                return normalizePath(resolve(parent + '/' + id));
-            }
-            if (id.startsWith('./')) {
+            if (id.startsWith('./') || id.startsWith('../')) {
                 return normalizePath(resolve(parent + '/' + id));
             }
             return null; // Continue to the next task(s)!
@@ -322,6 +323,7 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                 }
                 return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
             });
+            content = content.replace(/(^|\n)\/\/[ ]*@if[ ]+umd[ ]*\n([\s\S]*?)\n\/\/[ ]*@end-?if[ ]*(\n|$)/i, "");
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
         }
