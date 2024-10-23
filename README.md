@@ -3,7 +3,7 @@ Factory
 
 Simple Node.js script to generate CSS, HTML, and JavaScript files from ECMAScript, Pug, and SCSS files.
 
-> Paket, paket Node.js apa yang digemari para suami? Namanya [@taufik-nurrohman/factory](https://www.npmjs.com/package/@taufik-nurrohman/factory). Karena cara pakainya `npm run pack`. Xixixi lucu yah pack 😁
+_Paket, paket Node.js apa yang digemari para suami? Namanya [@taufik-nurrohman/factory](https://www.npmjs.com/package/@taufik-nurrohman/factory). Karena cara pakainya `npm run pack`. Xixixi lucu yah pack_ 😁
 
 Usage
 -----
@@ -67,7 +67,7 @@ So that in the distributable folder, your files will be renamed to:
 > /// FETCH('../node_modules/bootstrap/dist/js/bootstrap.js');
 > ~~~
 >
-> External URL will be downloaded, and its contents will replace the “fetch” block:
+> External URL will be downloaded, and its content will replace the “fetch” block:
 >
 > ~~~ scss
 > /// FETCH('https://example.com/assets/index.css');
