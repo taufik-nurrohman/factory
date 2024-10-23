@@ -311,8 +311,8 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
     if (INCLUDE_MJS) {
         let v;
         if (isFileStale(from, v = to.replace(/\.js$/, '.mjs'))) {
-            // Convert `+fetch('./foo/bar.baz')` to raw code
-            let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\+fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/g, ($0, $1) => {
+            // Convert `/// fetch('./foo/bar.baz')` to raw code
+            let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\/{3,}\s*fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/gi, ($0, $1) => {
                 let id = $1.slice(1, -1);
                 if (-1 !== id.indexOf('://')) {
                     !SILENT && console.info('Fetch URL: `' + id + '`');
@@ -320,7 +320,7 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                 }
                 return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
             });
-            content = content.replace(/(^|\n)\/\/[ ]*\+if[ ]+iife[ ]*\n([\s\S]*?)\n\/\/[ ]*\+end-?if[ ]*(\n|$)/i, "");
+            content = content.replace(/(^|\n)(\/{3,})[ \t]*iife\(\s*([\s\S]*?)\s*\n\2[ \t]*\)[ \t]*(\n|$)/i, "");
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
         }
@@ -351,7 +351,6 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                     ],
                     presets: [
                         ['@babel/preset-env', {
-                            loose: true, // NOTE: Deprecated and will be removed in Babel 8!
                             modules: false,
                             targets: '>0.25%'
                         }]
@@ -380,8 +379,8 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             sourcemap: false
         });
         await generator.close();
-        // Convert `+fetch('./foo/bar.baz')` to raw code
-        let content = await replaceAsync(file.parseContent(file.getContent(to), state), /\+fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/g, ($0, $1) => {
+        // Convert `/// fetch('./foo/bar.baz')` to raw code
+        let content = await replaceAsync(file.parseContent(file.getContent(to), state), /\/{3,}\s*fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/gi, ($0, $1) => {
             let id = $1.slice(1, -1);
             if (-1 !== id.indexOf('://')) {
                 !SILENT && console.info('Fetch URL: `' + id + '`');
@@ -461,9 +460,9 @@ factory('pug', function (from, to) {
 }, state);
 
 factory('scss', async function (from, to) {
-    // Convert `@fetch url('./foo/bar.baz')` to raw code
-    let content = await replaceAsync(file.parseContent(file.getContent(from), state), /@fetch\s+url\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^)]+?)\s*\)\s*;?/g, ($0, $1) => {
-        let id = '"' === $1[0] || "'" === $1[0] ? $1.slice(1, -1) : $1;
+    // Convert `/// fetch('./foo/bar.baz')` to raw code
+    let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\/{3,}\s*fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/gi, ($0, $1) => {
+        let id = $1.slice(1, -1);
         if (-1 !== id.indexOf('://')) {
             !SILENT && console.info('Fetch URL: `' + id + '`');
             return fetch(id).then(v => v.text());

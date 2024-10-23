@@ -59,22 +59,22 @@ So that in the distributable folder, your files will be renamed to:
 >
 > Use “fetch” syntax in `*.mjs` and `*.scss` files with a valid file path to load it inline:
 >
-> ~~~ css
-> @fetch url('../node_modules/bootstrap/dist/css/bootstrap.css');
+> ~~~ scss
+> /// FETCH('../node_modules/bootstrap/dist/css/bootstrap.css');
 > ~~~
 >
-> ~~~ js
-> +fetch('../node_modules/bootstrap/dist/js/bootstrap.js');
+> ~~~ mjs
+> /// FETCH('../node_modules/bootstrap/dist/js/bootstrap.js');
 > ~~~
 >
 > External URL will be downloaded, and its contents will replace the “fetch” block:
 >
-> ~~~ css
-> @fetch url('https://example.com/assets/index.css');
+> ~~~ scss
+> /// FETCH('https://example.com/assets/index.css');
 > ~~~
 >
-> ~~~ js
-> +fetch('https://example.com/assets/index.js');
+> ~~~ mjs
+> /// FETCH('https://example.com/assets/index.js');
 > ~~~
 
 Options
