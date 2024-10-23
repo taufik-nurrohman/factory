@@ -338,20 +338,16 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             context: 'this', // <https://rollupjs.org/guide/en#context>
             external: JS_EXTERNAL,
             input: from,
+            // WARNING: Do not sort!
             plugins: [
                 babel(state.babel || {
                     babelHelpers: 'bundled',
+                    // WARNING: Do not sort!
                     plugins: [
                         '@babel/plugin-transform-class-static-block',
-                        ['@babel/plugin-transform-class-properties', {
-                            loose: true
-                        }],
-                        ['@babel/plugin-transform-private-methods', {
-                            loose: true
-                        }],
-                        ['@babel/plugin-transform-private-property-in-object', {
-                            loose: true
-                        }]
+                        '@babel/plugin-transform-class-properties',
+                        '@babel/plugin-transform-private-methods',
+                        '@babel/plugin-transform-private-property-in-object'
                     ],
                     presets: [
                         ['@babel/preset-env', {
