@@ -3,15 +3,17 @@ import suffix from './_part/test.mjs';
 
 import parent from '../test.mjs';
 
-// Test inline import
-import '../test.js.txt';
+// Test inline
++fetch("../test.js.txt");
++fetch('../test.js.txt');
 
-// Test inline import
-import 'https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.min.js';
+// Test inline
++fetch("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js");
++fetch('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js');
 
-// @if iife
+// +if iife
 window.jQuery.fn.foo = 'bar';
-// @end-if
+// +end-if
 
 export default function foo() {
     return prefix() + ' bar ' + suffix() + ' ' + parent();

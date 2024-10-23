@@ -55,24 +55,24 @@ So that in the distributable folder, your files will be renamed to:
  - `LICENSE`
  - `LICENSE.txt`
 
-Invalid import statements on `*.mjs` and `*.scss` files with valid file path will be imported inline:
+Use “fetch” syntax in `*.mjs` and `*.scss` files with a valid file path to load it inline:
 
 ~~~ css
-@import '../node_modules/bootstrap/dist/css/bootstrap.css';
+@fetch url('../node_modules/bootstrap/dist/css/bootstrap.css');
 ~~~
 
 ~~~ js
-import '../node_modules/bootstrap/dist/js/bootstrap.js';
++fetch('../node_modules/bootstrap/dist/js/bootstrap.js');
 ~~~
 
-External URL will be downloaded, and its contents will replace the import block:
+External URL will be downloaded, and its contents will replace the “fetch” block:
 
 ~~~ css
-@import 'https://example.com/assets/index.css';
+@fetch url('https://example.com/assets/index.css');
 ~~~
 
 ~~~ js
-import 'https://example.com/assets/index.js';
++fetch('https://example.com/assets/index.js');
 ~~~
 
 Options

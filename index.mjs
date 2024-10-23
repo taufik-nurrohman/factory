@@ -311,19 +311,16 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
     if (INCLUDE_MJS) {
         let v;
         if (isFileStale(from, v = to.replace(/\.js$/, '.mjs'))) {
-            // Convert `import './foo/bar.baz'` to raw code
-            let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
+            // Convert `+fetch('./foo/bar.baz')` to raw code
+            let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\+fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/g, ($0, $1) => {
                 let id = $1.slice(1, -1);
                 if (-1 !== id.indexOf('://')) {
                     !SILENT && console.info('Fetch URL: `' + id + '`');
                     return fetch(id).then(v => v.text());
                 }
-                if (['jsx', 'mjs', 'ts', 'tsx'].includes(file.x(id))) {
-                    return $0; // Native!
-                }
                 return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
             });
-            content = content.replace(/(^|\n)\/\/[ ]*@if[ ]+iife[ ]*\n([\s\S]*?)\n\/\/[ ]*@end-?if[ ]*(\n|$)/i, "");
+            content = content.replace(/(^|\n)\/\/[ ]*\+if[ ]+iife[ ]*\n([\s\S]*?)\n\/\/[ ]*\+end-?if[ ]*(\n|$)/i, "");
             file.setContent(v, content);
             !SILENT && console.info('Create file `' + relative(v) + '`');
         }
@@ -345,16 +342,20 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                 babel(state.babel || {
                     babelHelpers: 'bundled',
                     plugins: [
-                        ['@babel/plugin-proposal-class-properties', {
+                        '@babel/plugin-transform-class-static-block',
+                        ['@babel/plugin-transform-class-properties', {
                             loose: true
                         }],
-                        ['@babel/plugin-proposal-private-methods', {
+                        ['@babel/plugin-transform-private-methods', {
+                            loose: true
+                        }],
+                        ['@babel/plugin-transform-private-property-in-object', {
                             loose: true
                         }]
                     ],
                     presets: [
                         ['@babel/preset-env', {
-                            loose: true,
+                            loose: true, // NOTE: Deprecated and will be removed in Babel 8!
                             modules: false,
                             targets: '>0.25%'
                         }]
@@ -383,15 +384,12 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             sourcemap: false
         });
         await generator.close();
-        // Convert `import './foo/bar.baz'` to raw code
-        let content = await replaceAsync(file.parseContent(file.getContent(to), state), /\bimport\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*;?/g, ($0, $1) => {
+        // Convert `+fetch('./foo/bar.baz')` to raw code
+        let content = await replaceAsync(file.parseContent(file.getContent(to), state), /\+fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/g, ($0, $1) => {
             let id = $1.slice(1, -1);
-            // if (-1 !== id.indexOf('://')) {
-            //     !SILENT && console.info('Fetch URL: `' + id + '`');
-            //     return fetch(id).then(v => v.text());
-            // } --> already resolved by `resolveURL()`
-            if (['jsx', 'mjs', 'ts', 'tsx'].includes(file.x(id))) {
-                return $0; // Native!
+            if (-1 !== id.indexOf('://')) {
+                !SILENT && console.info('Fetch URL: `' + id + '`');
+                return fetch(id).then(v => v.text());
             }
             return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
         });
@@ -467,15 +465,12 @@ factory('pug', function (from, to) {
 }, state);
 
 factory('scss', async function (from, to) {
-    // Convert `@import './foo/bar.baz'` to raw code
-    let content = await replaceAsync(file.parseContent(file.getContent(from), state), /@import\s+("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*;?/g, ($0, $1) => {
-        let id = $1.slice(1, -1);
+    // Convert `@fetch url('./foo/bar.baz')` to raw code
+    let content = await replaceAsync(file.parseContent(file.getContent(from), state), /@fetch\s+url\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^)]+?)\s*\)\s*;?/g, ($0, $1) => {
+        let id = '"' === $1[0] || "'" === $1[0] ? $1.slice(1, -1) : $1;
         if (-1 !== id.indexOf('://')) {
             !SILENT && console.info('Fetch URL: `' + id + '`');
             return fetch(id).then(v => v.text());
-        }
-        if (['scss'].includes(file.x(id))) {
-            return $0; // Native!
         }
         return file.getContent(resolve(file.parent(from) + '/' + id)) ?? $0;
     });
