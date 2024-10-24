@@ -20,3 +20,9 @@ window.jQuery.fn.foo = 'bar';
 export default function foo() {
     return prefix() + ' bar ' + suffix() + ' ' + parent();
 }
+
+let x = 'string' === typeof y;
+
+function asdf(a, b = 2, {c = false}) {
+    console.log({a, b, c: c ?? 3});
+}

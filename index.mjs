@@ -341,6 +341,24 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             // WARNING: Do not sort!
             plugins: [
                 babel(state.babel || {
+                    assumptions: {
+                        arrayLikeIsIterable: true,
+                        constantReexports: true,
+                        ignoreFunctionLength: true,
+                        ignoreToPrimitiveHint: true,
+                        mutableTemplateObject: true,
+                        noClassCalls: true,
+                        noDocumentAll: true,
+                        objectRestNoSymbols: true,
+                        privateFieldsAsProperties: true,
+                        pureGetters: true,
+                        setClassMethods: true,
+                        setComputedProperties: true,
+                        setPublicClassFields: true,
+                        setSpreadProperties: true,
+                        skipForOfIteratorClosing: true,
+                        superIsCallableConstructor: true
+                    },
                     babelHelpers: 'bundled',
                     // WARNING: Do not sort!
                     plugins: [
@@ -351,6 +369,7 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
                     ],
                     presets: [
                         ['@babel/preset-env', {
+                            exclude: ['transform-typeof-symbol'],
                             modules: false,
                             targets: '>0.25%'
                         }]

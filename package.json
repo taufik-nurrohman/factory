@@ -19,7 +19,7 @@
     "node-fetch": "^3.3.2",
     "pug": "^3.0.3",
     "rollup": "^4.24.0",
-    "sass": "^1.80.3",
+    "sass": "^1.80.4",
     "terser": "^5.36.0",
     "yargs": "^17.7.2"
   },
@@ -50,5 +50,5 @@
     "test-umd": "node index.mjs --js-format=umd --from=test --js-name=test --mjs --pug --scss --to=result"
   },
   "type": "module",
-  "version": "2.2.2"
+  "version": "2.2.3"
 }
