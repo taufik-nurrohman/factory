@@ -497,7 +497,9 @@ factory('scss', async function (from, to) {
     }
     if (isFileStale(from, to)) {
         let result = compileSass(content, {
+            charset: false,
             loadPaths: [file.parent(from)],
+            sourceMap: false,
             style: 'expanded'
         });
         file.setContent(to, beautify.css(v = result.css.toString(), {
