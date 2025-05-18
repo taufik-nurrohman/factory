@@ -5,22 +5,22 @@
   },
   "bugs": "https://github.com/taufik-nurrohman/factory/issues",
   "dependencies": {
-    "@babel/core": "^7.25.9",
-    "@babel/plugin-transform-class-properties": "^7.25.9",
-    "@babel/plugin-transform-private-methods": "^7.25.9",
-    "@babel/preset-env": "^7.25.9",
+    "@babel/core": "^7.27.1",
+    "@babel/plugin-transform-class-properties": "^7.27.1",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
     "@rollup/plugin-babel": "^6.0.4",
-    "@rollup/plugin-commonjs": "^28.0.1",
-    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "@taufik-nurrohman/file": "*",
     "@taufik-nurrohman/folder": "*",
     "clean-css": "^5.3.3",
-    "js-beautify": "^1.15.1",
+    "js-beautify": "^1.15.4",
     "node-fetch": "^3.3.2",
     "pug": "^3.0.3",
-    "rollup": "^4.24.0",
-    "sass": "^1.80.4",
-    "terser": "^5.36.0",
+    "rollup": "^4.41.0",
+    "sass": "^1.89.0",
+    "terser": "^5.39.2",
     "yargs": "^17.7.2"
   },
   "description": "Simple Node.js script to generate CSS, HTML, and JavaScript files from ECMAScript, Pug, and SCSS files.",
@@ -50,5 +50,5 @@
     "test-umd": "node index.mjs --js-format=umd --from=test --js-name=test --mjs --pug --scss --to=result"
   },
   "type": "module",
-  "version": "2.2.4"
+  "version": "2.2.5"
 }

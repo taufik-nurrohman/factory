@@ -26,3 +26,10 @@ let x = 'string' === typeof y;
 function asdf(a, b = 2, {c = false}) {
     console.log({a, b, c: c ?? 3});
 }
+
+const ghjk = new Map;
+
+for (let a of ghjk) {
+    let [k, v] = a;
+    console.log({k, v});
+}
