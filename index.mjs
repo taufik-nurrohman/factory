@@ -307,6 +307,16 @@ function isFileStale(from, to) {
 }
 
 factory('jsx,mjs,ts,tsx', async function (from, to) {
+    let routeFrom = from.substr(DIR_FROM.length),
+        routeTo = to.substr(DIR_TO.length);
+    state.file = {
+        from: routeFrom,
+        to: routeTo,
+    };
+    state.folder = {
+        from: folder.parent(routeFrom),
+        to: folder.parent(routeTo),
+    };
     // Generate Node.js module…
     if (INCLUDE_MJS) {
         let v;
@@ -429,9 +439,21 @@ factory('jsx,mjs,ts,tsx', async function (from, to) {
             !SILENT && console.info('Create file `' + relative(v) + '`');
         });
     }
+    delete state.file;
+    delete state.folder;
 }, state);
 
 factory('pug', function (from, to) {
+    let routeFrom = from.substr(DIR_FROM.length),
+        routeTo = to.substr(DIR_TO.length);
+    state.file = {
+        from: routeFrom,
+        to: routeTo,
+    };
+    state.folder = {
+        from: folder.parent(routeFrom),
+        to: folder.parent(routeTo),
+    };
     let content = file.parseContent(file.getContent(from), state);
     if (INCLUDE_PUG) {
         let v;
@@ -446,7 +468,7 @@ factory('pug', function (from, to) {
             doctype: 'html',
             filename: from // What is this for by the way?
         });
-        file.setContent(to, beautify.html(pug(state), {
+        file.setContent(to, beautify.html(file.parseContent(pug(state), state), {
             css: {
                 end_with_newline: false,
                 eol: '\n',
@@ -476,9 +498,21 @@ factory('pug', function (from, to) {
         }));
         !SILENT && console.info('Create file `' + relative(to) + '`');
     }
+    delete state.file;
+    delete state.folder;
 }, state);
 
 factory('scss', async function (from, to) {
+    let routeFrom = from.substr(DIR_FROM.length),
+        routeTo = to.substr(DIR_TO.length);
+    state.file = {
+        from: routeFrom,
+        to: routeTo,
+    };
+    state.folder = {
+        from: folder.parent(routeFrom),
+        to: folder.parent(routeTo),
+    };
     // Convert `/// fetch('./foo/bar.baz')` to raw code
     let content = await replaceAsync(file.parseContent(file.getContent(from), state), /\/{3,}\s*fetch\s*\(\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*'|`(?:\\.|[^`])*`)\s*\)\s*;?/gi, ($0, $1) => {
         let id = $1.slice(1, -1);
@@ -520,14 +554,28 @@ factory('scss', async function (from, to) {
             !SILENT && console.info('Create file `' + relative(v) + '`');
         });
     }
+    delete state.file;
+    delete state.folder;
 }, state);
 
 // File(s) that ends with `.txt` extension will not include the `.txt` part to the
 // destination folder. To include the `.txt` part to the destination folder, be
 // sure to double the `.txt` suffix after the file name. Example: `LICENSE.txt.txt`
 factory('txt', function (from, to) {
+    let routeFrom = from.substr(DIR_FROM.length),
+        routeTo = to.substr(DIR_TO.length);
+    state.file = {
+        from: routeFrom,
+        to: routeTo,
+    };
+    state.folder = {
+        from: folder.parent(routeFrom),
+        to: folder.parent(routeTo),
+    };
     if (isFileStale(from, to)) {
         file.setContent(to, file.parseContent(file.getContent(from), state));
         !SILENT && console.info('Create file `' + relative(to) + '`');
     }
+    delete state.file;
+    delete state.folder;
 }, state);

@@ -17,6 +17,8 @@ import parent from '../test.mjs';
 window.jQuery.fn.foo = 'bar';
 /// )
 
+/*! %(file.to) */
+
 export default function foo() {
     return prefix() + ' bar ' + suffix() + ' ' + parent();
 }

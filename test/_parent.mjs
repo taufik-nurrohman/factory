@@ -1,3 +1,3 @@
 export default function () {
-    return 'Yikes!';
+    return '%(file.to)';
 }

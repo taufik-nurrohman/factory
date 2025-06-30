@@ -1,5 +1,5 @@
 @media (max-width: 1024px) {
   body::before {
-    content: 'Yikes!';
+    content: '%(file.to)';
   }
 }
